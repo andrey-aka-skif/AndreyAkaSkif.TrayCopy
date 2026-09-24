@@ -40,3 +40,4 @@ updates:
       test:
         patterns:
           - "xunit*"
+          - "Microsoft.Extensions.TimeProvider.Testing"
