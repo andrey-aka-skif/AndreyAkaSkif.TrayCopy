@@ -1,6 +1,6 @@
 using System.Drawing;
 using AndreyAkaSkif.TrayCopy.Interop;
-using Avalonia.Controls.ApplicationLifetimes;
+using AndreyAkaSkif.TrayCopy.Views;
 using Avalonia.Platform;
 using Avalonia.Threading;
 using H.NotifyIcon.Core;
@@ -19,15 +19,16 @@ internal sealed class TrayController : IDisposable
     // GUID иконки выводится из пути exe: Windows привязывает GUID к бинарнику, и отладочная
     // сборка не конфликтует с установленной копией
     private readonly TrayIcon _trayIcon = new() { ToolTip = ToolTip };
-    private readonly IClassicDesktopStyleApplicationLifetime _lifetime;
+    private readonly SettingsWindowService _settingsWindow;
     private Icon? _icon;
 
     /// <summary>
-    /// Создаёт контроллер; через <paramref name="lifetime"/> он завершает приложение
+    /// Создаёт контроллер; по среднему клику и Shift+правому он открывает окно настроек
+    /// через <paramref name="settingsWindow"/>
     /// </summary>
-    public TrayController(IClassicDesktopStyleApplicationLifetime lifetime)
+    public TrayController(SettingsWindowService settingsWindow)
     {
-        _lifetime = lifetime;
+        _settingsWindow = settingsWindow;
 
         var window = _trayIcon.MessageWindow;
         window.MouseEventReceived += OnMouseEventReceived;
@@ -72,13 +73,19 @@ internal sealed class TrayController : IDisposable
 
     private void OnMouseEventReceived(object? sender, MessageWindow.MouseEventReceivedEventArgs e)
     {
-        if (e.MouseEvent == MouseEvent.IconMiddleMouseUp)
+        var opensSettings = e.MouseEvent == MouseEvent.IconMiddleMouseUp
+            || (e.MouseEvent == MouseEvent.IconRightMouseUp && IsShiftPressed());
+        if (opensSettings)
         {
-            // Временный выход, пока нет окна настроек с кнопкой «Выйти». Отложен до выхода
-            // из обработчика: завершение уничтожает окно, чьё сообщение сейчас обрабатывается
-            Dispatcher.UIThread.Post(() => _lifetime.Shutdown());
+            // Окно показывается после выхода из обработчика сообщения трея
+            Dispatcher.UIThread.Post(_settingsWindow.Show);
         }
     }
+
+    // Состояние клавиши в момент вызова, а не по очереди сообщений: сообщение трея приходит
+    // от Explorer, и GetKeyState может вернуть устаревшее состояние
+    private static bool IsShiftPressed() =>
+        (NativeMethods.GetAsyncKeyState(NativeMethods.VkShift) & 0x8000) != 0;
 
     // Explorer перезапущен: его новый экземпляр ничего не знает о прежних иконках
     private void OnTaskbarCreated(object? sender, EventArgs e)
