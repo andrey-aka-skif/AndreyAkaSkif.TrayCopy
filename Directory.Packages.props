@@ -19,6 +19,13 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- Внедрение зависимостей и параметры сервисов (Options pattern): контейнер собирается
+         в App.axaml.cs -->
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="10.0.12" />
+    <PackageVersion Include="Microsoft.Extensions.Options" Version="10.0.12" />
+  </ItemGroup>
+
+  <ItemGroup>
     <!-- Трей: иконка с обработкой средней кнопки и уведомлениями; System.Drawing.Common —
          загрузка кадра нужного размера из app.ico -->
     <PackageVersion Include="H.NotifyIcon" Version="2.4.1" />
@@ -26,7 +33,19 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- Хранение настроек: шифрование значений DPAPI. В net10.0-windows сборка входит только
+         в Microsoft.WindowsDesktop.App, который подключается вместе с WPF и WinForms -->
+    <PackageVersion Include="System.Security.Cryptography.ProtectedData" Version="10.0.12" />
+  </ItemGroup>
+
+  <ItemGroup>
     <!-- Инструменты: сборка app.ico из SVG (assets/icon/build-icon.cs) -->
     <PackageVersion Include="Svg.Skia" Version="5.2.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Тестирование: xUnit v3 в режиме Microsoft.Testing.Platform (задан в global.json),
+         пакеты VSTest не нужны. Ассерты — встроенные -->
+    <PackageVersion Include="xunit.v3" Version="4.0.1" />
   </ItemGroup>
 </Project>
