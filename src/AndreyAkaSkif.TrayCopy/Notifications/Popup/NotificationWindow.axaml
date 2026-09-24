@@ -1,0 +1,39 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:n="using:AndreyAkaSkif.TrayCopy.Notifications"
+        x:Class="AndreyAkaSkif.TrayCopy.Notifications.Popup.NotificationWindow"
+        x:ClassModifier="internal"
+        x:DataType="n:Notification"
+        Title="TrayCopy"
+        Width="320"
+        SizeToContent="Height"
+        CanResize="False"
+        WindowDecorations="None"
+        WindowStartupLocation="Manual"
+        ShowInTaskbar="False"
+        ShowActivated="False"
+        Topmost="True"
+        Background="Transparent"
+        TransparencyLevelHint="Transparent">
+
+    <!-- Прозрачное окно: углы скругляет рамка -->
+    <Border CornerRadius="8"
+            Padding="12"
+            BorderThickness="1"
+            Background="{DynamicResource SystemControlBackgroundAltHighBrush}"
+            BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}">
+        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+            <Image Source="/Assets/app.ico"
+                   Width="32"
+                   Height="32"
+                   VerticalAlignment="Top"
+                   RenderOptions.BitmapInterpolationMode="HighQuality" />
+            <StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center">
+                <TextBlock Text="{Binding Title}" FontWeight="SemiBold" TextWrapping="Wrap" />
+                <TextBlock Text="{Binding Text}"
+                           TextWrapping="Wrap"
+                           Foreground="{DynamicResource SystemControlForegroundBaseMediumHighBrush}" />
+            </StackPanel>
+        </Grid>
+    </Border>
+</Window>

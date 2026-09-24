@@ -6,6 +6,9 @@ using Avalonia.Threading;
 using AndreyAkaSkif.TrayCopy.Activation;
 using AndreyAkaSkif.TrayCopy.Autostart;
 using AndreyAkaSkif.TrayCopy.Autostart.RunKey;
+using AndreyAkaSkif.TrayCopy.Notifications;
+using AndreyAkaSkif.TrayCopy.Notifications.Balloon;
+using AndreyAkaSkif.TrayCopy.Notifications.Popup;
 using AndreyAkaSkif.TrayCopy.Settings;
 using AndreyAkaSkif.TrayCopy.Settings.Persistence;
 using AndreyAkaSkif.TrayCopy.Settings.Persistence.Json;
@@ -66,6 +69,10 @@ public partial class App : Application
         services.AddScoped<SettingsViewModel>();
         services.AddScoped<SettingsWindow>();
         services.AddSingleton<SettingsWindowService>();
+
+        services.AddSingleton<INotifier, PopupNotifier>();
+        services.AddSingleton<INotifier, BalloonNotifier>();
+        services.AddSingleton<NotificationService>();
 
         services.AddSingleton<ActivationListener>();
         services.AddSingleton<TrayIconHost>();
