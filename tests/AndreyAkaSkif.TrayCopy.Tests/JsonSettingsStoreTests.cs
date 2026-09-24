@@ -12,6 +12,8 @@ public sealed class JsonSettingsStoreTests : IDisposable
           "version": 1,
           "notification": "popup",
           "protection": "none",
+          "startupDisplaySeconds": 5,
+          "trimWhitespace": true,
           "selected": "github",
           "entries": [{ "name": "github", "value": "ghp_token" }]
         }
@@ -119,6 +121,8 @@ public sealed class JsonSettingsStoreTests : IDisposable
         Assert.Equal(1, root.GetProperty("version").GetInt32());
         Assert.Equal("system", root.GetProperty("notification").GetString());
         Assert.Equal("none", root.GetProperty("protection").GetString());
+        Assert.Equal(10, root.GetProperty("startupDisplaySeconds").GetInt32());
+        Assert.False(root.GetProperty("trimWhitespace").GetBoolean());
         Assert.Equal("gitea", root.GetProperty("selected").GetString());
 
         var first = root.GetProperty("entries")[0];
@@ -137,6 +141,8 @@ public sealed class JsonSettingsStoreTests : IDisposable
         var root = document.RootElement;
         Assert.Equal("popup", root.GetProperty("notification").GetString());
         Assert.Equal("dpapi", root.GetProperty("protection").GetString());
+        Assert.Equal(5, root.GetProperty("startupDisplaySeconds").GetInt32());
+        Assert.True(root.GetProperty("trimWhitespace").GetBoolean());
         Assert.Equal(JsonValueKind.Null, root.GetProperty("selected").ValueKind);
         Assert.Equal(0, root.GetProperty("entries").GetArrayLength());
     }
@@ -156,6 +162,8 @@ public sealed class JsonSettingsStoreTests : IDisposable
         var settings = result.Settings;
         Assert.Equal(NotificationKind.Popup, settings.Notification);
         Assert.Equal(ProtectionMode.None, settings.Protection);
+        Assert.Equal(TimeSpan.FromSeconds(5), settings.StartupDisplayTime);
+        Assert.True(settings.TrimWhitespace);
         Assert.Equal([new Entry("github", "ghp_token")], settings.Entries.Items);
         Assert.Equal("github", settings.Entries.Current?.Name);
     }
@@ -181,10 +189,19 @@ public sealed class JsonSettingsStoreTests : IDisposable
         ValidFileWith(root => root.Remove("notification")),
         ValidFileWith(root => root["notification"] = "toast"),
         ValidFileWith(root => root["notification"] = 0),
+        ValidFileWith(root => root.Remove("startupDisplaySeconds")),
+        ValidFileWith(root => root["startupDisplaySeconds"] = -1),
+        ValidFileWith(root => root["startupDisplaySeconds"] = 61),
+        ValidFileWith(root => root.Remove("trimWhitespace")),
         ValidFileWith(root => root.Remove("selected")),
         ValidFileWith(root => root["entries"] = null),
         ValidFileWith(root => root["entries"]![0]!["name"] = null),
         ValidFileWith(root => root["entries"]![0]!.AsObject().Remove("value")),
+        // данные нарушают правила записей
+        ValidFileWith(root => root["entries"]![0]!["name"] = ""),
+        ValidFileWith(root => root["entries"]![0]!["value"] = ""),
+        ValidFileWith(root => root["entries"]!.AsArray().Add(
+            new JsonObject { ["name"] = "GitHub", ["value"] = "second-token" })),
         // значение при dpapi — не base64
         ValidFileWith(root => root["protection"] = "dpapi"),
         // значение при dpapi — base64, но не шифр DPAPI этого пользователя
@@ -230,6 +247,8 @@ public sealed class JsonSettingsStoreTests : IDisposable
         var loaded = result.Settings;
         Assert.Equal(settings.Notification, loaded.Notification);
         Assert.Equal(settings.Protection, loaded.Protection);
+        Assert.Equal(settings.StartupDisplayTime, loaded.StartupDisplayTime);
+        Assert.Equal(settings.TrimWhitespace, loaded.TrimWhitespace);
         Assert.Equal(settings.Entries.Items, loaded.Entries.Items);
         Assert.Equal(settings.Entries.Current, loaded.Entries.Current);
     }
@@ -245,6 +264,8 @@ public sealed class JsonSettingsStoreTests : IDisposable
     {
         Assert.Equal(NotificationKind.Popup, settings.Notification);
         Assert.Equal(ProtectionMode.Dpapi, settings.Protection);
+        Assert.Equal(TimeSpan.FromSeconds(5), settings.StartupDisplayTime);
+        Assert.True(settings.TrimWhitespace);
         Assert.Empty(settings.Entries.Items);
         Assert.Null(settings.Entries.Current);
     }
@@ -253,6 +274,8 @@ public sealed class JsonSettingsStoreTests : IDisposable
     {
         Notification = NotificationKind.System,
         Protection = protection,
+        StartupDisplayTime = TimeSpan.FromSeconds(10),
+        TrimWhitespace = false,
         Entries = new EntryList(
             [new("github", "ghp_first-token"), new("gitea", "gitea-second-token")],
             "gitea"),
