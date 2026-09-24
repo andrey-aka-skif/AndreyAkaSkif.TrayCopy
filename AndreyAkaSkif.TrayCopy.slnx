@@ -8,6 +8,13 @@
     <File Path="CONTRIBUTING.md" />
     <File Path="CHANGELOG.md" />
   </Folder>
+  <Folder Name="/assets/">
+    <File Path="assets/icon/build-icon.cs" />
+    <File Path="assets/icon/icon.svg" />
+    <File Path="assets/icon/icon-16.svg" />
+    <File Path="assets/icon/icon-20.svg" />
+    <File Path="assets/icon/icon-24.svg" />
+  </Folder>
   <Folder Name="/src/">
     <Project Path="src/AndreyAkaSkif.TrayCopy/AndreyAkaSkif.TrayCopy.csproj" />
   </Folder>

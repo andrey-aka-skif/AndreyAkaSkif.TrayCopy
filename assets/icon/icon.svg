@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256">
+  <!-- Планшет буфера обмена -->
+  <rect x="36" y="32" width="184" height="212" rx="22" fill="#2F6FDB" stroke="#173E8C" stroke-width="8" />
+  <!-- Лист -->
+  <rect x="60" y="68" width="136" height="156" rx="8" fill="#FFFFFF" />
+  <!-- Клипса -->
+  <rect x="84" y="10" width="88" height="48" rx="14" fill="#3B4656" stroke="#1F2630" stroke-width="6" />
+  <!-- Ключ -->
+  <g transform="rotate(-45 128 146) translate(12 0)" fill="#263445">
+    <circle cx="84" cy="146" r="24" fill="none" stroke="#263445" stroke-width="14" />
+    <rect x="106" y="139" width="72" height="14" />
+    <rect x="150" y="153" width="12" height="16" />
+    <rect x="166" y="153" width="12" height="22" />
+  </g>
+</svg>
