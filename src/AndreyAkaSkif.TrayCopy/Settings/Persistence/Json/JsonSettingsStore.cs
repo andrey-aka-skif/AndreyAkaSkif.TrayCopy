@@ -17,9 +17,9 @@ internal sealed class JsonSettingsStore(IOptions<JsonSettingsStoreOptions> optio
 
     /// <summary>
     /// Читает настройки из файла. Если файла нет, возвращает настройки по умолчанию. Если
-    /// файл нечитаем — повреждён, неполон, зашифрован другим пользователем или записан
-    /// в неизвестной версии формата, — переносит его в резервную копию рядом и возвращает
-    /// настройки по умолчанию вместе с путём копии
+    /// файл нечитаем — повреждён, неполон, содержит недопустимые данные, зашифрован другим
+    /// пользователем или записан в неизвестной версии формата, — переносит его в резервную
+    /// копию рядом и возвращает настройки по умолчанию вместе с путём копии
     /// </summary>
     /// <exception cref="IOException">Файл недоступен, например занят другим процессом</exception>
     public SettingsLoadResult Load()
@@ -34,7 +34,9 @@ internal sealed class JsonSettingsStore(IOptions<JsonSettingsStoreOptions> optio
         {
             settings = Read();
         }
-        catch (Exception e) when (e is JsonException or CryptographicException or FormatException)
+        // ArgumentException — недопустимые данные: модель отклоняет их при создании
+        catch (Exception e) when (e is JsonException or CryptographicException
+            or FormatException or ArgumentException)
         {
             settings = null;
         }
@@ -62,6 +64,8 @@ internal sealed class JsonSettingsStore(IOptions<JsonSettingsStoreOptions> optio
             SettingsFile.CurrentVersion,
             settings.Notification,
             settings.Protection,
+            (int)settings.StartupDisplayTime.TotalSeconds,
+            settings.TrimWhitespace,
             settings.Entries.Current?.Name,
             ConvertValues(
                 settings.Entries.Items,
@@ -102,6 +106,8 @@ internal sealed class JsonSettingsStore(IOptions<JsonSettingsStoreOptions> optio
             Entries = new EntryList(entries, file.Selected),
             Notification = file.Notification,
             Protection = file.Protection,
+            StartupDisplayTime = TimeSpan.FromSeconds(file.StartupDisplaySeconds),
+            TrimWhitespace = file.TrimWhitespace,
         };
     }
 

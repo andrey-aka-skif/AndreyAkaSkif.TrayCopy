@@ -1,8 +1,9 @@
 namespace AndreyAkaSkif.TrayCopy.Entries;
 
 /// <summary>
-/// Представляет неизменяемый упорядоченный список записей с текущей записью. Текущая
-/// запись всегда принадлежит списку; её нет только у пустого списка
+/// Представляет неизменяемый упорядоченный список записей с текущей записью. Имена записей
+/// уникальны по правилу <see cref="EntryRules.CheckUniqueName"/>. Текущая запись всегда
+/// принадлежит списку; её нет только у пустого списка
 /// </summary>
 internal sealed class EntryList
 {
@@ -13,9 +14,21 @@ internal sealed class EntryList
     /// Создаёт список из копии <paramref name="items"/>. Текущей становится запись с именем
     /// <paramref name="currentName"/>, а если такой нет — первая
     /// </summary>
+    /// <exception cref="ArgumentException">Имена записей повторяются</exception>
     public EntryList(IEnumerable<Entry> items, string? currentName)
     {
         Entry[] copy = [.. items];
+        for (var i = 1; i < copy.Length; i++)
+        {
+            // Крайняя мера, как и в Entry: окно настроек не даёт сохранить повторы
+            var error = EntryRules.CheckUniqueName(
+                copy[i].Name, copy.Take(i).Select(entry => entry.Name));
+            if (error is not null)
+            {
+                throw new ArgumentException($"{error}: {copy[i].Name}", nameof(items));
+            }
+        }
+
         Items = copy;
         _currentIndex = copy.Length == 0
             ? -1
