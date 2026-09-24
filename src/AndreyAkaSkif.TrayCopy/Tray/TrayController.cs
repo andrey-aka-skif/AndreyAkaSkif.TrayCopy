@@ -23,8 +23,8 @@ internal sealed class TrayController : IDisposable
     private Icon? _icon;
 
     /// <summary>
-    /// Создаёт контроллер; по среднему клику и Shift+правому он открывает окно настроек
-    /// через <paramref name="settingsWindow"/>
+    /// Создаёт контроллер; по клику с Shift он открывает окно настроек через
+    /// <paramref name="settingsWindow"/>
     /// </summary>
     public TrayController(SettingsWindowService settingsWindow)
     {
@@ -71,10 +71,12 @@ internal sealed class TrayController : IDisposable
         _icon = icon;
     }
 
+    // Средний клик не обрабатывается: Windows 11 начиная с 22621.1344 присылает его как
+    // левый, уже после отпускания кнопки, и отличить их нельзя
     private void OnMouseEventReceived(object? sender, MessageWindow.MouseEventReceivedEventArgs e)
     {
-        var opensSettings = e.MouseEvent == MouseEvent.IconMiddleMouseUp
-            || (e.MouseEvent == MouseEvent.IconRightMouseUp && IsShiftPressed());
+        var opensSettings = e.MouseEvent is MouseEvent.IconLeftMouseUp or MouseEvent.IconRightMouseUp
+            && IsShiftPressed();
         if (opensSettings)
         {
             // Окно показывается после выхода из обработчика сообщения трея
