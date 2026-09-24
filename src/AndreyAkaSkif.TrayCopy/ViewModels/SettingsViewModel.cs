@@ -29,6 +29,12 @@ internal sealed partial class SettingsViewModel : ViewModelBase, IDisposable
         _settings = settings;
         _autostart = autostart;
 
+        if (settings.BackupPath is { } backupPath)
+        {
+            BackupFileName = Path.GetFileName(backupPath);
+            BackupFolder = Path.GetDirectoryName(backupPath);
+        }
+
         var current = settings.Current;
         TrimWhitespace = current.TrimWhitespace;
         Notification = current.Notification;
@@ -69,6 +75,17 @@ internal sealed partial class SettingsViewModel : ViewModelBase, IDisposable
     /// </summary>
     public static decimal MaxStartupDisplaySeconds { get; } =
         (decimal)AppSettings.MaxStartupDisplayTime.TotalSeconds;
+
+    /// <summary>
+    /// Имя файла, в который при запуске приложения отложены нечитаемые настройки;
+    /// <see langword="null"/>, если настройки прочитаны или их не было
+    /// </summary>
+    public string? BackupFileName { get; }
+
+    /// <summary>
+    /// Папка с отложенным файлом настроек; <see langword="null"/>, если такого файла нет
+    /// </summary>
+    public string? BackupFolder { get; }
 
     /// <summary>
     /// Строки списка записей в порядке переключения

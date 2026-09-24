@@ -55,6 +55,28 @@
         </Grid>
 
         <StackPanel Spacing="10">
+            <!-- Настройки при запуске не прочитались. Отложенный файл лежит рядом с
+                 settings.json, поэтому показано только его имя, а папка открывается кнопкой -->
+            <Border IsVisible="{Binding BackupFileName, Converter={x:Static ObjectConverters.IsNotNull}}"
+                    BorderBrush="{DynamicResource SystemControlErrorTextForegroundBrush}"
+                    Background="{DynamicResource SystemControlBackgroundBaseLowBrush}"
+                    BorderThickness="1"
+                    CornerRadius="4"
+                    Padding="12,8">
+                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
+                    <TextBlock Text="⚠"
+                               Foreground="{DynamicResource SystemControlErrorTextForegroundBrush}" />
+                    <StackPanel Grid.Column="1" Spacing="2">
+                        <TextBlock Text="Прежние настройки не удалось прочитать. Они сохранены в файл"
+                                   TextWrapping="Wrap" />
+                        <SelectableTextBlock Text="{Binding BackupFileName}" TextWrapping="Wrap" />
+                        <Button Content="Открыть папку"
+                                HorizontalAlignment="Right"
+                                Click="OnOpenBackupFolderClick" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+
             <TextBlock Text="Записи" FontWeight="SemiBold" />
 
             <Grid ColumnDefinitions="*,Auto">

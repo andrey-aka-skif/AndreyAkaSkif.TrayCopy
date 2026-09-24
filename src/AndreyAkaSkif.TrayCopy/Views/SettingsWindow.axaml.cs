@@ -2,6 +2,7 @@ using AndreyAkaSkif.TrayCopy.ViewModels;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Platform.Storage;
 
 namespace AndreyAkaSkif.TrayCopy.Views;
 
@@ -43,5 +44,14 @@ internal sealed partial class SettingsWindow : Window
                 viewModel.SelectedEntry = entry;
             }
         });
+    }
+
+    // Папку открывает Проводник: запуск внешней программы — забота платформы, а не модели
+    private void OnOpenBackupFolderClick(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is SettingsViewModel { BackupFolder: { } folder })
+        {
+            _ = Launcher.LaunchDirectoryInfoAsync(new DirectoryInfo(folder));
+        }
     }
 }
