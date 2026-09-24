@@ -1,4 +1,4 @@
-# TrayCopy
+# <img src="assets/icon/icon.svg" width="32" height="32" alt=""> TrayCopy
 
 [![License](https://img.shields.io/github/license/andrey-aka-skif/AndreyAkaSkif.TrayCopy.svg?label=License)](https://github.com/andrey-aka-skif/AndreyAkaSkif.TrayCopy/blob/master/LICENSE)
 [![CI](https://github.com/andrey-aka-skif/AndreyAkaSkif.TrayCopy/actions/workflows/ci.yml/badge.svg)](https://github.com/andrey-aka-skif/AndreyAkaSkif.TrayCopy/actions/workflows/ci.yml)
@@ -33,6 +33,8 @@ Windows 10 или 11 (x64). Приложение ставится для тек�
 и запуск при входе в Windows. Там же кнопка «Выйти из приложения»: другого способа
 закрыть приложение нет.
 
+![Окно настроек](assets/screenshots/settings.png)
+
 Windows 11 прячет новые иконки в область «^» рядом с часами. Чтобы иконка была всегда на
 виду, перетащите её оттуда на панель задач или включите TrayCopy в «Параметры» →
 «Персонализация» → «Панель задач» → «Другие значки в области уведомлений».
@@ -51,7 +53,3 @@ Windows 11 прячет новые иконки в область «^» рядо
 Через «Параметры» → «Приложения» → «Установленные приложения». Запуск при входе в
 Windows снимается, а файл настроек остаётся — чтобы удалить и его, удалите папку
 `%APPDATA%\AndreyAkaSkif.TrayCopy`.
-
-## Разработка
-
-Сборка, тесты и выпуск описаны в [CONTRIBUTING.md](./CONTRIBUTING.md).
