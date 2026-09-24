@@ -45,7 +45,9 @@
 
   <ItemGroup>
     <!-- Тестирование: xUnit v3 в режиме Microsoft.Testing.Platform (задан в global.json),
-         пакеты VSTest не нужны. Ассерты — встроенные -->
+         пакеты VSTest не нужны. Ассерты — встроенные. FakeTimeProvider — управляемое время
+         для кода на TimeProvider -->
     <PackageVersion Include="xunit.v3" Version="4.0.1" />
+    <PackageVersion Include="Microsoft.Extensions.TimeProvider.Testing" Version="10.10.0" />
   </ItemGroup>
 </Project>
