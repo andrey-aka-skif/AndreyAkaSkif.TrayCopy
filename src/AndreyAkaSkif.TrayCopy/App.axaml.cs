@@ -68,6 +68,7 @@ public partial class App : Application
         services.AddSingleton<SettingsWindowService>();
 
         services.AddSingleton<ActivationListener>();
+        services.AddSingleton<TrayIconHost>();
         services.AddSingleton<TrayController>();
 
         return services.BuildServiceProvider(new ServiceProviderOptions
