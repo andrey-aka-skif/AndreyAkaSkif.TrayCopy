@@ -15,13 +15,11 @@ namespace AndreyAkaSkif.TrayCopy.Tray;
 /// </remarks>
 internal sealed class TrayIconHost : IDisposable
 {
-    private const string ToolTip = "TrayCopy";
-
     private static readonly Uri IconUri = new("avares://AndreyAkaSkif.TrayCopy/Assets/app.ico");
 
     // GUID иконки выводится из пути exe: Windows привязывает GUID к бинарнику, и отладочная
     // сборка не конфликтует с установленной копией
-    private readonly TrayIcon _trayIcon = new() { ToolTip = ToolTip };
+    private readonly TrayIcon _trayIcon = new();
     private Icon? _icon;
 
     /// <summary>
@@ -50,6 +48,11 @@ internal sealed class TrayIconHost : IDisposable
         LoadIcon();
         _trayIcon.Create();
     }
+
+    /// <summary>
+    /// Заменяет подсказку, которая появляется при наведении на иконку
+    /// </summary>
+    public void SetToolTip(string text) => _trayIcon.UpdateToolTip(text);
 
     /// <summary>
     /// Показывает системное уведомление от имени иконки: без звука, в том числе в первый час
