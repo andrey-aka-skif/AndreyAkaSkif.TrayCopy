@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Avalonia.Threading;
+using AndreyAkaSkif.TrayCopy.Activation;
 using AndreyAkaSkif.TrayCopy.Autostart;
 using AndreyAkaSkif.TrayCopy.Autostart.RunKey;
 using AndreyAkaSkif.TrayCopy.Settings;
@@ -31,6 +32,7 @@ public partial class App : Application
 
             var services = ConfigureServices(desktop);
             services.GetRequiredService<TrayController>().Show();
+            services.GetRequiredService<ActivationListener>().Start();
 
             // Окно при запуске показывается уже в цикле интерфейса: отсчёт до его скрытия
             // привязывается к контексту синхронизации этого цикла
@@ -65,6 +67,7 @@ public partial class App : Application
         services.AddScoped<SettingsWindow>();
         services.AddSingleton<SettingsWindowService>();
 
+        services.AddSingleton<ActivationListener>();
         services.AddSingleton<TrayController>();
 
         return services.BuildServiceProvider(new ServiceProviderOptions
