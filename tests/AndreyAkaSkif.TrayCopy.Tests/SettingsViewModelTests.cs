@@ -64,6 +64,29 @@ public sealed class SettingsViewModelTests : IDisposable
     }
 
     [Fact]
+    public void Constructor_ShouldSplitBackupPathFromSettingsService()
+    {
+        // Arrange
+        var store = new InMemorySettingsStore(new SettingsLoadResult(
+            new AppSettings(), @"C:\Data\TrayCopy\settings.json.20260924-220648.bak"));
+
+        // Act
+        using var viewModel = new SettingsViewModel(new SettingsService(store), _autostart, _time);
+
+        // Assert
+        Assert.Equal("settings.json.20260924-220648.bak", viewModel.BackupFileName);
+        Assert.Equal(@"C:\Data\TrayCopy", viewModel.BackupFolder);
+    }
+
+    [Fact]
+    public void Constructor_ShouldLeaveBackupEmpty_WhenSettingsWereRead()
+    {
+        // Assert
+        Assert.Null(_viewModel.BackupFileName);
+        Assert.Null(_viewModel.BackupFolder);
+    }
+
+    [Fact]
     public void Add_ShouldAppendSelectedInvalidEntryAndBlockSave()
     {
         // Act
