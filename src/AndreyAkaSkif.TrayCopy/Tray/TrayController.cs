@@ -1,5 +1,6 @@
 using System.Drawing;
 using AndreyAkaSkif.TrayCopy.Interop;
+using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Platform;
 using Avalonia.Threading;
 using H.NotifyIcon.Core;
@@ -18,15 +19,15 @@ internal sealed class TrayController : IDisposable
     // GUID иконки выводится из пути exe: Windows привязывает GUID к бинарнику, и отладочная
     // сборка не конфликтует с установленной копией
     private readonly TrayIcon _trayIcon = new() { ToolTip = ToolTip };
-    private readonly Action _exit;
+    private readonly IClassicDesktopStyleApplicationLifetime _lifetime;
     private Icon? _icon;
 
     /// <summary>
-    /// Создаёт контроллер; <paramref name="exit"/> завершает приложение
+    /// Создаёт контроллер; через <paramref name="lifetime"/> он завершает приложение
     /// </summary>
-    public TrayController(Action exit)
+    public TrayController(IClassicDesktopStyleApplicationLifetime lifetime)
     {
-        _exit = exit;
+        _lifetime = lifetime;
 
         var window = _trayIcon.MessageWindow;
         window.MouseEventReceived += OnMouseEventReceived;
@@ -75,7 +76,7 @@ internal sealed class TrayController : IDisposable
         {
             // Временный выход, пока нет окна настроек с кнопкой «Выйти». Отложен до выхода
             // из обработчика: завершение уничтожает окно, чьё сообщение сейчас обрабатывается
-            Dispatcher.UIThread.Post(_exit);
+            Dispatcher.UIThread.Post(() => _lifetime.Shutdown());
         }
     }
 
