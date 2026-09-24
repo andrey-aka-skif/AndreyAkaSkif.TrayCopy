@@ -44,3 +44,8 @@ jobs:
 
       - name: Build
         run: dotnet build --configuration Release --no-restore
+
+      # Режим Microsoft.Testing.Platform задан в global.json; шифрование DPAPI в тестах
+      # работает под пользователем раннера
+      - name: Test
+        run: dotnet test --solution AndreyAkaSkif.TrayCopy.slnx --configuration Release --no-build

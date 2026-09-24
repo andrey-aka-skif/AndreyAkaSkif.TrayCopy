@@ -32,5 +32,11 @@ updates:
         patterns:
           - "CommunityToolkit.*"
           - "H.NotifyIcon"
+          - "Microsoft.Extensions.DependencyInjection"
+          - "Microsoft.Extensions.Options"
           - "System.Drawing.Common"
+          - "System.Security.Cryptography.ProtectedData"
           - "Svg.Skia"
+      test:
+        patterns:
+          - "xunit*"
