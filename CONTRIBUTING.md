@@ -16,6 +16,7 @@ dotnet restore
 
 ```
 assets/icon/                          исходники иконки приложения и скрипт сборки app.ico
+installer/                            скрипт установщика, Inno Setup
 src/AndreyAkaSkif.TrayCopy/           приложение, Avalonia
 tests/AndreyAkaSkif.TrayCopy.Tests/   тесты, xUnit v3
 ```
@@ -262,11 +263,77 @@ dotnet run assets/icon/build-icon.cs
 dotnet run assets/icon/build-icon.cs -- --preview artifacts/icon-preview.png
 ```
 
+## Публикация и установщик
+
+Приложение публикуется по профилю
+[win-x64.pubxml](./src/AndreyAkaSkif.TrayCopy/Properties/PublishProfiles/win-x64.pubxml):
+self-contained (среда .NET входит в поставку), в папку `artifacts/publish/win-x64`, без
+тримминга и без упаковки в один файл.
+
+```shell
+dotnet publish src/AndreyAkaSkif.TrayCopy -p:PublishProfile=win-x64
+```
+
+`VisualStudio.gitignore` игнорирует все `*.pubxml`: там бывают пароли веб-публикации.
+Для этого профиля в конце [.gitignore](./.gitignore) стоит исключение.
+
+Установщик собирает Inno Setup 6.3 или новее (в том числе 7) по скрипту
+[AndreyAkaSkif.TrayCopy.iss](./installer/AndreyAkaSkif.TrayCopy.iss). Скрипт упаковывает
+результат публикации, поэтому запускается после неё:
+
+```shell
+iscc installer/AndreyAkaSkif.TrayCopy.iss
+```
+
+`iscc` лежит в каталоге Inno Setup и в PATH обычно не попадает. Готовый файл —
+`artifacts/installer/TrayCopy-<версия>-setup.exe`. Версию установщик берёт из
+опубликованного exe, без sha коммита, так что параметров у `iscc` нет.
+
+Установщик:
+
+- ставит приложение для текущего пользователя в `%LocalAppData%\Programs\TrayCopy` без
+  UAC, создаёт ярлык в «Пуске» и запись в «Установленных приложениях»;
+- пока приложение запущено, не ставит и не удаляет его, а просит закрыть: проверяет
+  мьютекс `SingleInstance` (`AppMutex`);
+- не ставит отладочные символы: `.pdb` нативных библиотек Skia и HarfBuzz весят около
+  100 МБ;
+- при удалении снимает автозапуск, если в ключе Run записан путь этой установки (правило
+  то же, что у `RunKeyAutostart`), и не трогает настройки в `%APPDATA%`.
+
+`AppId` в скрипте не меняется никогда: по нему Windows и установщик узнают уже
+установленное приложение, и с другим `AppId` новая версия встала бы рядом со старой.
+
+## Версии и выпуск
+
+Версия в исходниках не хранится: CI передаёт её сборке через `-p:Version=`.
+
+| Сборка | Версия | Где взять установщик |
+|---|---|---|
+| локальная | `0.0.0-local` (из [Directory.Build.props](./Directory.Build.props)) | собрать самому |
+| пуш в `master` | `X.Y.(Z+1)-dev.N` | артефакт прогона CI, 30 дней |
+| релиз | `X.Y.Z` из тега `vX.Y.Z` | Releases |
+
+Dev-версия считается от последнего тега `vX.Y.Z`, N — число коммитов после него; до
+первого релиза база — `0.0.0`. По SemVer такая версия старше выпущенной и младше
+следующей, а один коммит всегда получает одну и ту же версию.
+
+Перед выпуском в [CHANGELOG.md](./CHANGELOG.md) добавляется секция версии — коммитом
+`chore(release): зафиксирована версия X.Y.Z` через PR, до создания релиза, чтобы тег
+указывал на состояние с готовым журналом. Затем на GitHub создаётся Release с тегом
+`vX.Y.Z`. Выпуск запускается **публикацией релиза**, а не push тега: релиз —
+преднамеренный акт с release notes. Воркфлоу [publish.yml](./.github/workflows/publish.yml)
+проверяет формат тега, собирает и тестирует решение с этой версией, собирает установщик и
+прикладывает его к релизу. Упавший прогон переигрывается кнопкой Re-run: файл в релизе
+перезаписывается.
+
 ## CI
 
 Воркфлоу [ci.yml](./.github/workflows/ci.yml) собирает решение и прогоняет тесты на пуш в
 любую ветку. Раннер — `windows-latest`: сборка под `net10.0-windows` требует Windows, а
-тесты хранилища настроек — DPAPI.
+тесты хранилища настроек — DPAPI. На пуш в `master` после зелёных сборки и тестов второй
+джоб, `installer`, собирает установщик с dev-версией и выкладывает его артефактом прогона.
+В остальных ветках этот джоб пропускается. Inno Setup входит в образ `windows-latest`,
+`iscc` вызывается по полному пути.
 
 Версии экшенов и пакетов поднимает dependabot
 ([dependabot.yml](./.github/dependabot.yml)); мажоры — вручную.
