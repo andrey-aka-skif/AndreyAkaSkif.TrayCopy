@@ -16,6 +16,9 @@
     <File Path="assets/icon/icon-20.svg" />
     <File Path="assets/icon/icon-24.svg" />
   </Folder>
+  <Folder Name="/installer/">
+    <File Path="installer/AndreyAkaSkif.TrayCopy.iss" />
+  </Folder>
   <Folder Name="/src/">
     <Project Path="src/AndreyAkaSkif.TrayCopy/AndreyAkaSkif.TrayCopy.csproj" />
   </Folder>
