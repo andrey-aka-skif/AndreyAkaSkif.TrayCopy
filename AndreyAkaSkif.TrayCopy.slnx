@@ -2,6 +2,7 @@
   <Folder Name="/Solution Items/">
     <File Path="Directory.Build.props" />
     <File Path="Directory.Packages.props" />
+    <File Path="global.json" />
     <File Path="LICENSE" />
     <File Path="nuget.config" />
     <File Path="README.md" />
@@ -17,5 +18,8 @@
   </Folder>
   <Folder Name="/src/">
     <Project Path="src/AndreyAkaSkif.TrayCopy/AndreyAkaSkif.TrayCopy.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/AndreyAkaSkif.TrayCopy.Tests/AndreyAkaSkif.TrayCopy.Tests.csproj" />
   </Folder>
 </Solution>

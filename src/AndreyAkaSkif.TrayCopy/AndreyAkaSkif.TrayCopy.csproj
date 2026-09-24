@@ -30,4 +30,9 @@
     <PackageReference Include="System.Security.Cryptography.ProtectedData" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- Типы приложения internal; тесты обращаются к ним напрямую -->
+    <InternalsVisibleTo Include="AndreyAkaSkif.TrayCopy.Tests" />
+  </ItemGroup>
+
 </Project>
