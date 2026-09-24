@@ -13,7 +13,9 @@
 #define PublishDir AddBackslash(SourcePath) + "..\artifacts\publish\win-x64"
 #define ExeFile PublishDir + "\" + ExeName
 
-#define ProductVersion GetFileProductVersionString(ExeFile)
+; Встроенная функция, а не макрос из ISPPBuiltins.iss: макрос в Inno Setup 6 называется
+; GetFileProductVersion, в 7 — GetFileProductVersionString
+#define ProductVersion GetStringFileInfo(ExeFile, "ProductVersion")
 #if ProductVersion == ""
   #error Нет опубликованного exe: сначала dotnet publish src/AndreyAkaSkif.TrayCopy -p:PublishProfile=win-x64
 #endif
