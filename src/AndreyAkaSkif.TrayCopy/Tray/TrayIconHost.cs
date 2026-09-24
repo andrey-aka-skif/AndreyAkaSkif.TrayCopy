@@ -6,7 +6,8 @@ using H.NotifyIcon.Core;
 namespace AndreyAkaSkif.TrayCopy.Tray;
 
 /// <summary>
-/// Показывает иконку приложения в трее и сообщает о кликах по ней
+/// Показывает иконку приложения в трее и системные уведомления от её имени, сообщает о
+/// кликах по ней
 /// </summary>
 /// <remarks>
 /// Единственное место, где приложение работает с H.NotifyIcon. События приходят в потоке,
@@ -48,6 +49,27 @@ internal sealed class TrayIconHost : IDisposable
         _trayIcon.MessageWindow.Create();
         LoadIcon();
         _trayIcon.Create();
+    }
+
+    /// <summary>
+    /// Показывает системное уведомление от имени иконки: без звука, в том числе в первый час
+    /// после входа (это ответ на действие пользователя), и только сразу — отложенное
+    /// уведомление о клике устарело бы
+    /// </summary>
+    public void ShowNotification(string title, string text)
+    {
+        _trayIcon.ShowNotification(
+            title,
+            text,
+            NotificationIcon.None,
+            sound: false,
+            respectQuietTime: false,
+            realtime: true);
+
+        // H.NotifyIcon 2.4.1 показывает уведомление без подсказки (NIF_TIP), и Explorer
+        // перестаёт выводить её при наведении, пока подсказку не запишут заново. Исправлено
+        // в H.NotifyIcon 2.5.0 (HavenDV/H.NotifyIcon#239)
+        _trayIcon.UpdateToolTip(_trayIcon.ToolTip);
     }
 
     /// <summary>
