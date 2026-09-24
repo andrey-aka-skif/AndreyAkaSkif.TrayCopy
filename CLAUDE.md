@@ -1,0 +1,53 @@
+# AndreyAkaSkif.TrayCopy
+
+Утилита для Windows в трее: ЛКМ по иконке копирует текущую строку в буфер обмена,
+ПКМ выбирает следующую, СКМ или Shift+ПКМ открывает окно настроек. Отображаемое имя —
+`TrayCopy`, всё остальное (решение, проекты, пространства имён, каталог данных) —
+`AndreyAkaSkif.TrayCopy`.
+
+Устройство репозитория, сборка и стиль XML-документации — в [CONTRIBUTING.md](./CONTRIBUTING.md).
+Образец организации репозитория — `D:\.dev\common\AndreyAkaSkif.ServiceDefaults`.
+
+## Разрешения проекта
+
+В этом репозитории, в отличие от глобального правила, разрешены инфраструктура Claude
+(этот файл, `.claude/` со скилами) и трейлер `Co-Authored-By` в коммитах.
+
+## Стек и принятые решения
+
+- .NET 10, `net10.0-windows` (задано в `Directory.Build.props`), Avalonia 12, CommunityToolkit.Mvvm.
+- Версии пакетов — только в `Directory.Packages.props` (CPM); у `PackageReference` версий нет.
+- Иконка в трее — **H.NotifyIcon** (core-пакет), а не `TrayIcon` Avalonia: встроенный не различает
+  среднюю кнопку, жёстко открывает меню по ПКМ и не умеет уведомления.
+- Буфер обмена — Win32 через P/Invoke, с форматами `ExcludeClipboardContentFromMonitorProcessing`,
+  `CanIncludeInClipboardHistory = 0`, `CanUploadToCloudClipboard = 0` (строка не попадает в Win+V
+  и облачный буфер). Владелец буфера — окно сообщений H.NotifyIcon.
+- Настройки — `%APPDATA%\AndreyAkaSkif.TrayCopy\settings.json`; шифрование DPAPI и вид уведомления
+  (своё окно / системное) переключаются в окне настроек.
+- Тесты — xUnit v3 4.x в режиме Microsoft.Testing.Platform (`global.json`), без пакетов VSTest.
+  Запуск: `dotnet test --solution AndreyAkaSkif.TrayCopy.slnx`. Без единого теста этот режим
+  завершается с кодом 8, поэтому тестовый проект существует только вместе с тестами.
+- Инсталлятор — Inno Setup, установка для текущего пользователя; скрипт совместим с Inno Setup 6
+  (в образе `windows-latest` — 6.7.x).
+- CI — `.github/workflows/ci.yml` на `windows-latest`.
+
+## Форматирование
+
+- UTF-8 без BOM, LF (`.gitattributes`, `.editorconfig`); файлы из шаблонов `dotnet new` приводятся
+  к этому виду.
+- `.slnx` — отступ 2 пробела: так его пишут `dotnet sln` и Visual Studio.
+
+## Порядок работы
+
+Этапы идут строго по одному, каждый — issue, ветка `<тип>/N-описание` от `origin/master` с
+`--no-track`, PR с `Closes #N`:
+
+0. рабочее пространство;
+1. каркас трея и собственная иконка приложения;
+2. модель и хранилище настроек, тестовый проект;
+3. окно настроек;
+4. действия трея: копирование, переключение, уведомления;
+5. инсталлятор, публикация релиза, версия из тега.
+
+Проверка перед коммитом: `dotnet build -c Release` без предупреждений (после этапа 2 —
+и `dotnet test --solution AndreyAkaSkif.TrayCopy.slnx -c Release`).
