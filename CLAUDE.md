@@ -29,9 +29,16 @@ Windows 11 присылает её как ЛКМ). Отображаемое им
 - Тесты — xUnit v3 4.x в режиме Microsoft.Testing.Platform (`global.json`), без пакетов VSTest.
   Запуск: `dotnet test --solution AndreyAkaSkif.TrayCopy.slnx`. Без единого теста этот режим
   завершается с кодом 8, поэтому тестовый проект существует только вместе с тестами.
-- Инсталлятор — Inno Setup, установка для текущего пользователя; скрипт совместим с Inno Setup 6
-  (в образе `windows-latest` — 6.7.x).
-- CI — `.github/workflows/ci.yml` на `windows-latest`.
+- Инсталлятор — Inno Setup, установка для текущего пользователя; скрипт
+  `installer/AndreyAkaSkif.TrayCopy.iss` совместим с Inno Setup 6.3+ (UTF-8 без BOM; в образе
+  `windows-latest` — 6.7.x, `iscc` не в PATH). Упаковывает `artifacts/publish/win-x64` после
+  `dotnet publish -p:PublishProfile=win-x64`, версию берёт из exe. `AppId` не менять.
+- Профиль публикации `*.pubxml` игнорируется `VisualStudio.gitignore` — в конце `.gitignore`
+  для него исключение.
+- Версии: локально `0.0.0-local` (`Directory.Build.props`), master — `X.Y.(Z+1)-dev.N` от
+  последнего тега, релиз — `X.Y.Z` из тега `vX.Y.Z`; в сборку передаются через `-p:Version`.
+- CI — `.github/workflows/ci.yml` на `windows-latest`; на master джоб `installer` выкладывает
+  установщик артефактом. Выпуск — `publish.yml` по публикации Release.
 
 ## Форматирование
 
@@ -52,4 +59,5 @@ Windows 11 присылает её как ЛКМ). Отображаемое им
 5. инсталлятор, публикация релиза, версия из тега.
 
 Проверка перед коммитом: `dotnet build -c Release` без предупреждений (после этапа 2 —
-и `dotnet test --solution AndreyAkaSkif.TrayCopy.slnx -c Release`).
+и `dotnet test --solution AndreyAkaSkif.TrayCopy.slnx -c Release`). При правке установщика
+или профиля публикации — ещё `dotnet publish` и `iscc`, если Inno Setup установлен.
