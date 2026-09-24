@@ -1,0 +1,46 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+#
+# CI: валидация на пуш в любую ветку (теги не триггерят).
+# pull_request намеренно не используется: пуш фиче-ветки уже даёт прогон, и его статус
+# виден в PR — так избегаем двойных прогонов.
+#
+# Раннер — Windows: приложение собирается под net10.0-windows и опирается на Win32 API.
+
+name: CI
+
+on:
+  push:
+    branches: ['**']
+
+env:
+  NUGET_PACKAGES: ${{ github.workspace }}/.nuget/packages
+  DOTNET_VERSION: 10.0.x
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v6
+        with:
+          path: ${{ env.NUGET_PACKAGES }}
+          # Версии живут в Directory.Packages.props, поэтому файл входит в ключ
+          # наравне с проектами
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', '**/Directory.Packages.props') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --configuration Release --no-restore
