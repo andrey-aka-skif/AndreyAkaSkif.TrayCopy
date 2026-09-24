@@ -16,6 +16,7 @@ dotnet restore
 
 ```
 assets/icon/                          исходники иконки приложения и скрипт сборки app.ico
+assets/screenshots/                   скриншоты для README
 installer/                            скрипт установщика, Inno Setup
 src/AndreyAkaSkif.TrayCopy/           приложение, Avalonia
 tests/AndreyAkaSkif.TrayCopy.Tests/   тесты, xUnit v3
