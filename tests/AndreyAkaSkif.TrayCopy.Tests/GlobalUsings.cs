@@ -1,5 +1,9 @@
+global using AndreyAkaSkif.TrayCopy.Autostart;
+global using AndreyAkaSkif.TrayCopy.Autostart.RunKey;
 global using AndreyAkaSkif.TrayCopy.Entries;
 global using AndreyAkaSkif.TrayCopy.Settings;
 global using AndreyAkaSkif.TrayCopy.Settings.Persistence;
 global using AndreyAkaSkif.TrayCopy.Settings.Persistence.Json;
+global using AndreyAkaSkif.TrayCopy.ViewModels;
+global using Microsoft.Extensions.Time.Testing;
 global using Xunit;

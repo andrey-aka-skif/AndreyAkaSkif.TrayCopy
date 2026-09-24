@@ -58,6 +58,17 @@ public class EntryListTests
     }
 
     [Fact]
+    public void Constructor_ShouldThrow_WhenNamesRepeatIgnoringCase()
+    {
+        // Arrange
+        Entry[] items = [new("github", "first-token"), new("GitHub", "second-token")];
+
+        // Act & Assert
+        var exception = Assert.Throws<ArgumentException>(() => new EntryList(items, null));
+        Assert.Contains("GitHub", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Constructor_ShouldCopyItems()
     {
         // Arrange
