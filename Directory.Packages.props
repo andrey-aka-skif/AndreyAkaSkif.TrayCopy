@@ -17,4 +17,16 @@
     <!-- MVVM -->
     <PackageVersion Include="CommunityToolkit.Mvvm" Version="8.4.2" />
   </ItemGroup>
+
+  <ItemGroup>
+    <!-- Трей: иконка с обработкой средней кнопки и уведомлениями; System.Drawing.Common —
+         загрузка кадра нужного размера из app.ico -->
+    <PackageVersion Include="H.NotifyIcon" Version="2.4.1" />
+    <PackageVersion Include="System.Drawing.Common" Version="10.0.12" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Инструменты: сборка app.ico из SVG (assets/icon/build-icon.cs) -->
+    <PackageVersion Include="Svg.Skia" Version="5.2.3" />
+  </ItemGroup>
 </Project>

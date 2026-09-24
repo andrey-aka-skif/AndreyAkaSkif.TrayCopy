@@ -18,7 +18,7 @@ indent_size = 4
 [*.{csproj,vbproj,fsproj,props,targets}]
 indent_size = 2
 
-[*.{xml,config,resx,settings,manifest}]
+[*.{xml,config,resx,settings,manifest,svg}]
 indent_size = 2
 
 # Разметка Avalonia — 4 пробела, как в шаблонах и документации Avalonia
