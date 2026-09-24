@@ -5,6 +5,10 @@
 # виден в PR — так избегаем двойных прогонов.
 #
 # Раннер — Windows: приложение собирается под net10.0-windows и опирается на Win32 API.
+#
+# Второй джоб, installer, работает только на master: после зелёных сборки и тестов
+# собирает пробный установщик с dev-версией и выкладывает его артефактом прогона.
+# Релизный установщик собирает publish.yml.
 
 name: CI
 
@@ -49,3 +53,61 @@ jobs:
       # работает под пользователем раннера
       - name: Test
         run: dotnet test --solution AndreyAkaSkif.TrayCopy.slnx --configuration Release --no-build
+
+  installer:
+    needs: build
+    if: github.ref == 'refs/heads/master'
+    runs-on: windows-latest
+
+    steps:
+      # Для версии нужны теги и история от последнего из них
+      - name: Checkout code
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      # Версия X.Y.(Z+1)-dev.N от последнего релизного тега vX.Y.Z, N — число коммитов
+      # после него. По SemVer она старше выпущенной и младше следующей; один коммит
+      # всегда получает одну версию. До первого релиза база — 0.0.0
+      - name: Версия dev
+        id: version
+        shell: bash
+        run: |
+          if tag=$(git describe --tags --abbrev=0 --match 'v[0-9]*.[0-9]*.[0-9]*' 2>/dev/null); then
+            base=${tag#v}
+            height=$(git rev-list --count "$tag"..HEAD)
+          else
+            base=0.0.0
+            height=$(git rev-list --count HEAD)
+          fi
+          IFS=. read -r major minor patch <<< "$base"
+          echo "version=$major.$minor.$((patch + 1))-dev.$height" >> "$GITHUB_OUTPUT"
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v6
+        with:
+          path: ${{ env.NUGET_PACKAGES }}
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', '**/Directory.Packages.props') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Publish
+        run: dotnet publish src/AndreyAkaSkif.TrayCopy -p:PublishProfile=win-x64 -p:Version=${{ steps.version.outputs.version }}
+
+      # Inno Setup входит в образ windows-latest, но iscc не в PATH. Версию установщик
+      # берёт из опубликованного exe
+      - name: Build installer
+        run: '& "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" installer/AndreyAkaSkif.TrayCopy.iss'
+
+      - name: Upload installer
+        uses: actions/upload-artifact@v7
+        with:
+          name: TrayCopy-${{ steps.version.outputs.version }}-setup
+          path: artifacts/installer/TrayCopy-${{ steps.version.outputs.version }}-setup.exe
+          if-no-files-found: error
+          retention-days: 30
