@@ -1,0 +1,36 @@
+<Project>
+
+  <PropertyGroup>
+    <!-- Настройки компиляции -->
+    <!-- Приложение только под Windows: DPAPI, реестр, Win32-трей и буфер обмена.
+         TFM с -windows снимает CA1416 для этих API без атрибутов на каждом вызове -->
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <!-- Анализаторы -->
+    <EnableNETAnalyzers>true</EnableNETAnalyzers>
+    <AnalysisLevel>latest-recommended</AnalysisLevel>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <!-- Приложение поставляется инсталлятором, NuGet-пакетов в репозитории нет -->
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <!-- Метаданные сборки. Product — отображаемое имя приложения. Версия задаётся из
+         релизного тега в CI (-p:Version=...); в исходнике не хранится -->
+    <Authors>andrey-aka-skif</Authors>
+    <Company>AndreyAkaSkif</Company>
+    <Product>TrayCopy</Product>
+    <Copyright>© $([System.DateTime]::Now.Year) @andrey-aka-skif</Copyright>
+    <RepositoryType>git</RepositoryType>
+    <RepositoryUrl>https://github.com/andrey-aka-skif/AndreyAkaSkif.TrayCopy</RepositoryUrl>
+  </PropertyGroup>
+
+</Project>
