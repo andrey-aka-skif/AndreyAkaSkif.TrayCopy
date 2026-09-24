@@ -1,0 +1,33 @@
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: ci
+    groups:
+      github-actions:
+        patterns: ['*']
+
+  # Мажоры поднимаем вручную: мажор Avalonia ломает API разметки и контролов,
+  # а интерфейс приложения автотестами не покрыт и проверяется вживую.
+  - package-ecosystem: nuget
+    directory: /
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: build
+    open-pull-requests-limit: 5
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+    groups:
+      # Пакеты фреймворка выпускаются одной версией и поднимаются только вместе;
+      # шаблон захватывает и AvaloniaUI.DiagnosticsSupport с собственной версией
+      avalonia:
+        patterns:
+          - "Avalonia*"
+      third-party:
+        patterns:
+          - "CommunityToolkit.*"
