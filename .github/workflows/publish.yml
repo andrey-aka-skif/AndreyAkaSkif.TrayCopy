@@ -1,0 +1,70 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+#
+# Выпуск: установщик собирается и прикладывается к GitHub Release. Версия берётся из
+# git-тега vX.Y.Z и передаётся сборке через -p:Version — в проекте она не хранится.
+# Единственный триггер — публикация Release: релиз это преднамеренный акт с release
+# notes, голый push тега ничего не выпускает. Упавший прогон переигрывается кнопкой
+# Re-run: установщик в релизе перезаписывается.
+#
+# Прогон CI здесь не переиспользуется: выпуск сам пересобирает и перепроверяет то, что
+# выпускает.
+
+name: Publish
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+env:
+  DOTNET_VERSION: 10.0.x
+
+jobs:
+  publish:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout по тегу релиза
+        uses: actions/checkout@v7
+
+      - name: Версия из тега
+        id: release
+        shell: bash
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          if [[ ! "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Тег релиза '$TAG' не в формате vX.Y.Z"
+            exit 1
+          fi
+          echo "version=${TAG#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --configuration Release --no-restore -p:Version=${{ steps.release.outputs.version }}
+
+      - name: Test
+        run: dotnet test --solution AndreyAkaSkif.TrayCopy.slnx --configuration Release --no-build
+
+      - name: Publish
+        run: dotnet publish src/AndreyAkaSkif.TrayCopy -p:PublishProfile=win-x64 -p:Version=${{ steps.release.outputs.version }}
+
+      # Inno Setup входит в образ windows-latest, но iscc не в PATH. Версию установщик
+      # берёт из опубликованного exe
+      - name: Build installer
+        run: '& "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" installer/AndreyAkaSkif.TrayCopy.iss'
+
+      # --clobber: при Re-run файл в релизе заменяется, а не даёт ошибку
+      - name: Upload installer to release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${{ github.ref_name }}" "artifacts/installer/TrayCopy-${{ steps.release.outputs.version }}-setup.exe" --clobber
