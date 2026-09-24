@@ -31,3 +31,6 @@ updates:
       third-party:
         patterns:
           - "CommunityToolkit.*"
+          - "H.NotifyIcon"
+          - "System.Drawing.Common"
+          - "Svg.Skia"
