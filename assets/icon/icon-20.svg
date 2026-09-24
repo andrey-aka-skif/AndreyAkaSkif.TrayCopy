@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20">
+  <!-- Рисунок для 20 px (трей при 125 %): контуры по пиксельной сетке 20×20 -->
+  <rect x="1.5" y="2.5" width="17" height="17" rx="1.5" fill="#2F6FDB" stroke="#173E8C" stroke-width="1" />
+  <rect x="3" y="6" width="14" height="12" fill="#FFFFFF" />
+  <rect x="6" y="1" width="8" height="4" rx="0.5" fill="#3B4656" />
+  <g fill="#263445">
+    <rect x="5" y="11" width="2" height="2" />
+    <rect x="9" y="11" width="2" height="2" />
+    <rect x="13" y="11" width="2" height="2" />
+  </g>
+</svg>
