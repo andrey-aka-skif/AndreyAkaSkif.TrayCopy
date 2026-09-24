@@ -1,0 +1,137 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:AndreyAkaSkif.TrayCopy.ViewModels"
+        xmlns:views="using:AndreyAkaSkif.TrayCopy.Views"
+        x:Class="AndreyAkaSkif.TrayCopy.Views.SettingsWindow"
+        x:ClassModifier="internal"
+        x:DataType="vm:SettingsViewModel"
+        Title="TrayCopy — настройки"
+        Icon="/Assets/app.ico"
+        Width="640"
+        SizeToContent="Height"
+        CanResize="False"
+        WindowStartupLocation="CenterScreen">
+
+    <Window.Resources>
+        <views:FractionToAngleConverter x:Key="FractionToAngle" />
+    </Window.Resources>
+
+    <DockPanel Margin="16">
+
+        <Grid DockPanel.Dock="Bottom" ColumnDefinitions="Auto,*,Auto,Auto" Margin="0,16,0,0">
+            <Button Grid.Column="0" Content="Выйти из приложения" Command="{Binding ExitCommand}" />
+
+            <!-- Отсчёт до скрытия окна, показанного при запуске: сектор убывает по часовой
+                 стрелке от верхней точки -->
+            <StackPanel Grid.Column="1"
+                        Orientation="Horizontal"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Spacing="6"
+                        IsVisible="{Binding Countdown.IsRunning}"
+                        ToolTip.Tip="Клик или клавиша в окне оставят его открытым">
+                <Panel Width="18" Height="18">
+                    <Ellipse Stroke="{DynamicResource SystemControlForegroundBaseMediumBrush}"
+                             StrokeThickness="1" />
+                    <!-- Толщина линии — половина размера: дуга заливает сектор до центра -->
+                    <Arc StartAngle="-90"
+                         SweepAngle="{Binding Countdown.RemainingFraction, Converter={StaticResource FractionToAngle}}"
+                         Stroke="{DynamicResource SystemControlHighlightAccentBrush}"
+                         StrokeThickness="9" />
+                </Panel>
+                <TextBlock VerticalAlignment="Center"
+                           Text="{Binding Countdown.RemainingSeconds, StringFormat='{}{0} с'}" />
+            </StackPanel>
+
+            <Button Grid.Column="2"
+                    Classes="accent"
+                    Content="Сохранить"
+                    Command="{Binding SaveCommand}"
+                    Margin="0,0,8,0" />
+            <Button Grid.Column="3"
+                    Content="Отмена"
+                    Command="{Binding CancelCommand}"
+                    IsCancel="True" />
+        </Grid>
+
+        <StackPanel Spacing="10">
+            <TextBlock Text="Записи" FontWeight="SemiBold" />
+
+            <Grid ColumnDefinitions="*,Auto">
+                <ListBox x:Name="EntryList"
+                         Grid.Column="0"
+                         ItemsSource="{Binding Entries}"
+                         SelectedItem="{Binding SelectedEntry}"
+                         MinHeight="80"
+                         MaxHeight="320">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate x:DataType="vm:EntryViewModel">
+                            <!-- Поля прижаты к верху: ошибка под одним полем не растягивает
+                                 соседнее по высоте строки -->
+                            <Grid ColumnDefinitions="180,*" ColumnSpacing="8">
+                                <TextBox Grid.Column="0"
+                                         VerticalAlignment="Top"
+                                         Text="{Binding Name}"
+                                         PlaceholderText="Имя" />
+                                <TextBox Grid.Column="1"
+                                         VerticalAlignment="Top"
+                                         Text="{Binding Value}"
+                                         PlaceholderText="Значение"
+                                         PasswordChar="•"
+                                         Classes="revealPasswordButton" />
+                            </Grid>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+
+                <StackPanel Grid.Column="1" Spacing="4" Margin="8,0,0,0">
+                    <Button Content="+" Width="36" Command="{Binding AddCommand}"
+                            ToolTip.Tip="Добавить запись" />
+                    <Button Content="–" Width="36" Command="{Binding RemoveCommand}"
+                            ToolTip.Tip="Удалить выделенную запись" />
+                    <Button Content="↑" Width="36" Command="{Binding MoveUpCommand}"
+                            ToolTip.Tip="Переместить выше" />
+                    <Button Content="↓" Width="36" Command="{Binding MoveDownCommand}"
+                            ToolTip.Tip="Переместить ниже" />
+                </StackPanel>
+            </Grid>
+
+            <CheckBox Content="Обрезать пробелы по краям при сохранении"
+                      IsChecked="{Binding TrimWhitespace}" />
+
+            <StackPanel Orientation="Horizontal" Spacing="16">
+                <TextBlock Text="Уведомление:" VerticalAlignment="Center" />
+                <RadioButton GroupName="Notification"
+                             Content="своё окно"
+                             IsChecked="{Binding IsPopupNotification}" />
+                <RadioButton GroupName="Notification"
+                             Content="системное"
+                             IsChecked="{Binding IsSystemNotification}" />
+            </StackPanel>
+
+            <CheckBox Content="Шифровать значения (DPAPI)" IsChecked="{Binding IsProtected}" />
+            <CheckBox Content="Запускать при входе в Windows"
+                      IsChecked="{Binding IsAutostartEnabled}" />
+
+            <StackPanel Orientation="Horizontal" Spacing="8">
+                <TextBlock Text="Показывать окно при запуске, с:" VerticalAlignment="Center" />
+                <NumericUpDown Value="{Binding StartupDisplaySeconds}"
+                               Minimum="{x:Static vm:SettingsViewModel.MinStartupDisplaySeconds}"
+                               Maximum="{x:Static vm:SettingsViewModel.MaxStartupDisplaySeconds}"
+                               Increment="1"
+                               FormatString="0"
+                               ParsingNumberStyle="Integer"
+                               Width="120"
+                               ToolTip.Tip="Если записей нет, окно при запуске открывается всегда и не скрывается" />
+                <TextBlock Text="0 — не показывать"
+                           VerticalAlignment="Center"
+                           Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" />
+            </StackPanel>
+
+            <TextBlock Text="{Binding ErrorMessage}"
+                       IsVisible="{Binding ErrorMessage, Converter={x:Static ObjectConverters.IsNotNull}}"
+                       Foreground="{DynamicResource SystemControlErrorTextForegroundBrush}"
+                       TextWrapping="Wrap" />
+        </StackPanel>
+    </DockPanel>
+</Window>
