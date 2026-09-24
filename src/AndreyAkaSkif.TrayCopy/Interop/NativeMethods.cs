@@ -18,6 +18,11 @@ internal static partial class NativeMethods
     public const int VkShift = 0x10;
 
     /// <summary>
+    /// Признак «любой процесс» для <see cref="AllowSetForegroundWindow"/>
+    /// </summary>
+    public const uint AsfwAny = uint.MaxValue;
+
+    /// <summary>
     /// Возвращает DPI монитора, на котором находится окно
     /// </summary>
     [LibraryImport("user32.dll")]
@@ -35,4 +40,12 @@ internal static partial class NativeMethods
     /// </summary>
     [LibraryImport("user32.dll")]
     public static partial short GetAsyncKeyState(int key);
+
+    /// <summary>
+    /// Разрешает процессу <paramref name="processId"/> вывести своё окно на передний план;
+    /// вызывающий процесс должен сам иметь это право
+    /// </summary>
+    [LibraryImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static partial bool AllowSetForegroundWindow(uint processId);
 }

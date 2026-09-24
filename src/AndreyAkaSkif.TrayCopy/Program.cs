@@ -1,6 +1,6 @@
 using Avalonia;
 using System;
-using AndreyAkaSkif.TrayCopy.Services;
+using AndreyAkaSkif.TrayCopy.Activation;
 
 namespace AndreyAkaSkif.TrayCopy;
 
@@ -12,10 +12,12 @@ sealed class Program
     [STAThread]
     public static void Main(string[] args)
     {
-        // Повторный запуск при работающей копии молча завершается
+        // Повторный запуск при работающей копии просит её показать окно настроек и
+        // завершается
         using var instance = SingleInstance.TryAcquire();
         if (instance is null)
         {
+            SingleInstance.RequestActivation();
             return;
         }
 
