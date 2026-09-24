@@ -1,0 +1,54 @@
+# Не искать .editorconfig в родительских каталогах
+root = true
+
+# Значения по умолчанию для всех файлов
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 4
+max_line_length = 100
+
+# .NET
+[*.{cs,vb}]
+indent_size = 4
+
+[*.{csproj,vbproj,fsproj,props,targets}]
+indent_size = 2
+
+[*.{xml,config,resx,settings,manifest}]
+indent_size = 2
+
+# Разметка Avalonia — 4 пробела, как в шаблонах и документации Avalonia
+[*.axaml]
+indent_size = 4
+
+# .sln — табуляция; .slnx dotnet sln и Visual Studio пишут с отступом в 2 пробела
+[*.sln]
+indent_style = tab
+
+[*.slnx]
+indent_size = 2
+
+# JSON / YAML / Markdown
+[*.json]
+indent_size = 2
+
+[*.{yml,yaml}]
+indent_size = 2
+
+[*.md]
+trim_trailing_whitespace = false
+max_line_length = 0
+
+# Windows-скрипты
+[*.{bat,cmd,ps1}]
+end_of_line = crlf
+
+# Тесты: подчёркивания в именах тест-методов — идиома xUnit (имя теста читается как
+# фраза в выводе раннера, это не вызываемая API-поверхность), правило именования тут
+# не по адресу. Остальные анализаторы остаются в силе.
+[tests/**/*.cs]
+dotnet_diagnostic.CA1707.severity = none
