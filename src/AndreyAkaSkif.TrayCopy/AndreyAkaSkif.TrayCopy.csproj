@@ -5,6 +5,8 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <!-- Значок exe. Собирается из SVG скриптом assets/icon/build-icon.cs -->
     <ApplicationIcon>Assets\app.ico</ApplicationIcon>
+    <!-- Код, генерируемый для LibraryImport (вызовы Win32 API), использует unsafe -->
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <ItemGroup>
@@ -21,6 +23,8 @@
       <PrivateAssets Condition="'$(Configuration)' != 'Debug'">All</PrivateAssets>
     </PackageReference>
     <PackageReference Include="CommunityToolkit.Mvvm" />
+    <PackageReference Include="H.NotifyIcon" />
+    <PackageReference Include="System.Drawing.Common" />
   </ItemGroup>
 
 </Project>
