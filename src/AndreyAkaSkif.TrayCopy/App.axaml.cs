@@ -6,6 +6,8 @@ using Avalonia.Threading;
 using AndreyAkaSkif.TrayCopy.Activation;
 using AndreyAkaSkif.TrayCopy.Autostart;
 using AndreyAkaSkif.TrayCopy.Autostart.RunKey;
+using AndreyAkaSkif.TrayCopy.Clipboard;
+using AndreyAkaSkif.TrayCopy.Clipboard.WinApi;
 using AndreyAkaSkif.TrayCopy.Notifications;
 using AndreyAkaSkif.TrayCopy.Notifications.Balloon;
 using AndreyAkaSkif.TrayCopy.Notifications.Popup;
@@ -70,12 +72,15 @@ public partial class App : Application
         services.AddScoped<SettingsWindow>();
         services.AddSingleton<SettingsWindowService>();
 
+        services.AddSingleton<IClipboard, Win32Clipboard>();
+
         services.AddSingleton<INotifier, PopupNotifier>();
         services.AddSingleton<INotifier, BalloonNotifier>();
         services.AddSingleton<NotificationService>();
 
         services.AddSingleton<ActivationListener>();
         services.AddSingleton<TrayIconHost>();
+        services.AddSingleton<TrayActions>();
         services.AddSingleton<TrayController>();
 
         return services.BuildServiceProvider(new ServiceProviderOptions
