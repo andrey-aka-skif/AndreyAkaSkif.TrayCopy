@@ -1,7 +1,8 @@
 # AndreyAkaSkif.TrayCopy
 
 Утилита для Windows в трее: ЛКМ по иконке копирует текущую строку в буфер обмена,
-ПКМ выбирает следующую, СКМ или Shift+ПКМ открывает окно настроек. Отображаемое имя —
+ПКМ выбирает следующую, клик с Shift открывает окно настроек (СКМ не используется:
+Windows 11 присылает её как ЛКМ). Отображаемое имя —
 `TrayCopy`, всё остальное (решение, проекты, пространства имён, каталог данных) —
 `AndreyAkaSkif.TrayCopy`.
 
@@ -17,11 +18,12 @@
 
 - .NET 10, `net10.0-windows` (задано в `Directory.Build.props`), Avalonia 12, CommunityToolkit.Mvvm.
 - Версии пакетов — только в `Directory.Packages.props` (CPM); у `PackageReference` версий нет.
-- Иконка в трее — **H.NotifyIcon** (core-пакет), а не `TrayIcon` Avalonia: встроенный не различает
-  среднюю кнопку, жёстко открывает меню по ПКМ и не умеет уведомления.
+- Иконка в трее — **H.NotifyIcon** (core-пакет), а не `TrayIcon` Avalonia: встроенный жёстко
+  открывает меню по ПКМ и не умеет уведомления. С H.NotifyIcon работает только `TrayIconHost`.
 - Буфер обмена — Win32 через P/Invoke, с форматами `ExcludeClipboardContentFromMonitorProcessing`,
-  `CanIncludeInClipboardHistory = 0`, `CanUploadToCloudClipboard = 0` (строка не попадает в Win+V
-  и облачный буфер). Владелец буфера — окно сообщений H.NotifyIcon.
+  `CanIncludeInClipboardHistory = 0`, `CanUploadToCloudClipboard = 0`, `Clipboard Viewer Ignore`
+  (строка не попадает в Win+V, облачный буфер и сторонние менеджеры буфера). Владелец буфера —
+  собственное скрытое окно сообщений `Win32Clipboard`, от трея не зависит.
 - Настройки — `%APPDATA%\AndreyAkaSkif.TrayCopy\settings.json`; шифрование DPAPI и вид уведомления
   (своё окно / системное) переключаются в окне настроек.
 - Тесты — xUnit v3 4.x в режиме Microsoft.Testing.Platform (`global.json`), без пакетов VSTest.
