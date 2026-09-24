@@ -23,8 +23,10 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <!-- Метаданные сборки. Product — отображаемое имя приложения. Версия задаётся из
-         релизного тега в CI (-p:Version=...); в исходнике не хранится -->
+    <!-- Метаданные сборки. Product — отображаемое имя приложения. Настоящую версию
+         передаёт CI (-p:Version=...): релизу — из тега vX.Y.Z, сборке с master — dev-версию
+         от последнего тега. Значение здесь получают только локальные сборки -->
+    <Version>0.0.0-local</Version>
     <Authors>andrey-aka-skif</Authors>
     <Company>AndreyAkaSkif</Company>
     <Product>TrayCopy</Product>
