@@ -430,3 +430,7 @@ FodyWeavers.xsd
 
 # Official VS Code C# Dev Kit Extension exclusion
 #*.lscache
+
+# Проект: профиль публикации хранится в репозитории. Правило *.pubxml выше рассчитано на
+# веб-публикацию с паролями в профиле; в этом профиле секретов нет
+!src/AndreyAkaSkif.TrayCopy/Properties/PublishProfiles/*.pubxml
