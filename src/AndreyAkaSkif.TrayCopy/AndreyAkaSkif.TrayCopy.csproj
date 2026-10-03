@@ -49,17 +49,23 @@
        THIRD-PARTY-NOTICES.txt. SDK разрешает пакеты и других сред (WindowsDesktop,
        AspNetCore), но в поставку входит только Microsoft.NETCore.App -->
   <Target Name="PublishThirdPartyNotices" AfterTargets="Publish">
+    <PropertyGroup>
+      <!-- Корень, заданный через NUGET_PACKAGES, NuGet оставляет как есть, без завершающего
+           слэша: так в CI -->
+      <_NuGetPackageRoot>$([MSBuild]::EnsureTrailingSlash('$(NuGetPackageRoot)'))</_NuGetPackageRoot>
+    </PropertyGroup>
+
     <ItemGroup>
       <_PackageAsset Include="@(RuntimeCopyLocalItems);@(NativeCopyLocalItems)" />
       <_ThirdPartyNotices Include="@(ResolvedRuntimePack->WithMetadataValue('FrameworkName', 'Microsoft.NETCore.App')->'%(PackageDirectory)\THIRD-PARTY-NOTICES.TXT')"
                           TargetName="dotnet" />
-      <_ThirdPartyNotices Include="@(_PackageAsset->WithMetadataValue('NuGetPackageId', 'System.Drawing.Common')->'$(NuGetPackageRoot)system.drawing.common\%(NuGetPackageVersion)\THIRD-PARTY-NOTICES.TXT'->Distinct())"
+      <_ThirdPartyNotices Include="@(_PackageAsset->WithMetadataValue('NuGetPackageId', 'System.Drawing.Common')->'$(_NuGetPackageRoot)system.drawing.common\%(NuGetPackageVersion)\THIRD-PARTY-NOTICES.TXT'->Distinct())"
                           TargetName="system.drawing.common" />
-      <_ThirdPartyNotices Include="@(_PackageAsset->WithMetadataValue('NuGetPackageId', 'SkiaSharp.NativeAssets.Win32')->'$(NuGetPackageRoot)skiasharp.nativeassets.win32\%(NuGetPackageVersion)\THIRD-PARTY-NOTICES.txt'->Distinct())"
+      <_ThirdPartyNotices Include="@(_PackageAsset->WithMetadataValue('NuGetPackageId', 'SkiaSharp.NativeAssets.Win32')->'$(_NuGetPackageRoot)skiasharp.nativeassets.win32\%(NuGetPackageVersion)\THIRD-PARTY-NOTICES.txt'->Distinct())"
                           TargetName="skiasharp" />
-      <_ThirdPartyNotices Include="@(_PackageAsset->WithMetadataValue('NuGetPackageId', 'HarfBuzzSharp.NativeAssets.Win32')->'$(NuGetPackageRoot)harfbuzzsharp.nativeassets.win32\%(NuGetPackageVersion)\THIRD-PARTY-NOTICES.txt'->Distinct())"
+      <_ThirdPartyNotices Include="@(_PackageAsset->WithMetadataValue('NuGetPackageId', 'HarfBuzzSharp.NativeAssets.Win32')->'$(_NuGetPackageRoot)harfbuzzsharp.nativeassets.win32\%(NuGetPackageVersion)\THIRD-PARTY-NOTICES.txt'->Distinct())"
                           TargetName="harfbuzzsharp" />
-      <_ThirdPartyNotices Include="@(_PackageAsset->WithMetadataValue('NuGetPackageId', 'CommunityToolkit.Mvvm')->'$(NuGetPackageRoot)communitytoolkit.mvvm\%(NuGetPackageVersion)\ThirdPartyNotices.txt'->Distinct())"
+      <_ThirdPartyNotices Include="@(_PackageAsset->WithMetadataValue('NuGetPackageId', 'CommunityToolkit.Mvvm')->'$(_NuGetPackageRoot)communitytoolkit.mvvm\%(NuGetPackageVersion)\ThirdPartyNotices.txt'->Distinct())"
                           TargetName="communitytoolkit.mvvm" />
       <_ThirdPartyNoticesName Include="dotnet;system.drawing.common;skiasharp;harfbuzzsharp;communitytoolkit.mvvm" />
       <_ThirdPartyNoticesMissing Include="@(_ThirdPartyNoticesName)"
