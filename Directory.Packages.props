@@ -4,9 +4,13 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- Avalonia. Пакеты фреймворка выпускаются одной версией и поднимаются только вместе -->
+    <!-- Avalonia. Пакеты фреймворка выпускаются одной версией и поднимаются только вместе.
+         Платформа — только Windows: Win32, Skia и HarfBuzz вместо Avalonia.Desktop, который
+         тянет ещё бэкенды Linux и macOS -->
     <PackageVersion Include="Avalonia" Version="12.1.3" />
-    <PackageVersion Include="Avalonia.Desktop" Version="12.1.3" />
+    <PackageVersion Include="Avalonia.Win32" Version="12.1.3" />
+    <PackageVersion Include="Avalonia.Skia" Version="12.1.3" />
+    <PackageVersion Include="Avalonia.HarfBuzz" Version="12.1.3" />
     <PackageVersion Include="Avalonia.Themes.Fluent" Version="12.1.3" />
     <PackageVersion Include="Avalonia.Fonts.Inter" Version="12.1.3" />
     <!-- Подключение Avalonia DevTools, только в Debug -->
