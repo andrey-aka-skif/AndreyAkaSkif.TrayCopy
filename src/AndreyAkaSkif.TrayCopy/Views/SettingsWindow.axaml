@@ -1,11 +1,12 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:app="using:AndreyAkaSkif.TrayCopy"
         xmlns:vm="using:AndreyAkaSkif.TrayCopy.ViewModels"
         xmlns:views="using:AndreyAkaSkif.TrayCopy.Views"
         x:Class="AndreyAkaSkif.TrayCopy.Views.SettingsWindow"
         x:ClassModifier="internal"
         x:DataType="vm:SettingsViewModel"
-        Title="TrayCopy — настройки"
+        Title="{Binding Source={x:Static app:AppInfo.Version}, StringFormat='TrayCopy {0}'}"
         Icon="/Assets/app.ico"
         Width="640"
         SizeToContent="Height"
@@ -103,6 +104,8 @@
                             ToolTip.Tip="Переместить ниже" />
                 </StackPanel>
             </Grid>
+
+            <TextBlock Text="Настройки" FontWeight="SemiBold" Margin="0,8,0,0" />
 
             <CheckBox Content="Обрезать пробелы по краям при сохранении"
                       IsChecked="{Binding TrimWhitespace}" />
