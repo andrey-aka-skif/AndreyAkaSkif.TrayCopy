@@ -287,12 +287,12 @@ dotnet run assets/icon/build-icon.cs -- --preview artifacts/icon-preview.png
 
 ## Публикация и установщик
 
-Приложение публикуется в двух вариантах, оба одним файлом и без тримминга:
+Приложение публикуется в двух вариантах, оба одним файлом:
 
-| Профиль | Среда .NET | Папка |
-|---|---|---|
-| [win-x64.pubxml](./src/AndreyAkaSkif.TrayCopy/Properties/PublishProfiles/win-x64.pubxml) | входит в поставку (self-contained) | `artifacts/publish/win-x64` |
-| [win-x64-framework-dependent.pubxml](./src/AndreyAkaSkif.TrayCopy/Properties/PublishProfiles/win-x64-framework-dependent.pubxml) | берётся из системы (framework-dependent) | `artifacts/publish/win-x64-framework-dependent` |
+| Профиль | Среда .NET | Тримминг | Папка |
+|---|---|---|---|
+| [win-x64.pubxml](./src/AndreyAkaSkif.TrayCopy/Properties/PublishProfiles/win-x64.pubxml) | входит в поставку (self-contained) | есть | `artifacts/publish/win-x64` |
+| [win-x64-framework-dependent.pubxml](./src/AndreyAkaSkif.TrayCopy/Properties/PublishProfiles/win-x64-framework-dependent.pubxml) | берётся из системы (framework-dependent) | нет | `artifacts/publish/win-x64-framework-dependent` |
 
 ```shell
 dotnet publish src/AndreyAkaSkif.TrayCopy -p:PublishProfile=win-x64
@@ -305,6 +305,16 @@ dotnet publish src/AndreyAkaSkif.TrayCopy -p:PublishProfile=win-x64-framework-de
 Варианту без среды нужна только `Microsoft.NETCore.App` 10 — «.NET Runtime 10»; она
 входит и в .NET Desktop Runtime, и в .NET SDK. Если среды нет, exe при запуске сам
 показывает окно .NET со ссылкой на её загрузку.
+
+Тримминг (`PublishTrimmed`) убирает из среды и библиотек код, который приложение не
+использует: exe self-contained уменьшается примерно вчетверо. Применим он только к
+self-contained публикации. Сломать тримминг может код, к которому обращаются через
+рефлексию: такой код он не видит и удаляет. Анализ тримминга сообщает о нём
+предупреждениями IL2xxx — при публикации по всем сборкам, а при обычной сборке по коду
+приложения (`EnableTrimAnalyzer`). Предупреждений быть не должно. Привязки в XAML поэтому
+компилируемые: у окна или шаблона с моделью задан `x:DataType`. Автотесты работают с
+обычной сборкой, так что после изменений, которые могут задеть тримминг, сценарии
+проверяются вживую на опубликованном exe.
 
 Сборки приложения и библиотек (а в self-contained и среды) упакованы в exe и загружаются
 из него без распаковки. Рядом с exe остаются только нативные библиотеки отрисовки — `libSkiaSharp.dll`,
