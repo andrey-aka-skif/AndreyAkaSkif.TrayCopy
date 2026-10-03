@@ -280,6 +280,18 @@ dotnet publish src/AndreyAkaSkif.TrayCopy -p:PublishProfile=win-x64
 `VisualStudio.gitignore` игнорирует все `*.pubxml`: там бывают пароли веб-публикации.
 Для этого профиля в конце [.gitignore](./.gitignore) стоит исключение.
 
+Рядом с exe лежат лицензии: [LICENSE](./LICENSE) под именем `LICENSE.txt` и
+[THIRD-PARTY-NOTICES.txt](./THIRD-PARTY-NOTICES.txt) — перечень сторонних компонентов
+поставки с текстами их лицензий. Оба файла копируются и при обычной сборке, поэтому окно
+«О программе» открывает их и при `dotnet run`.
+
+Часть компонентов сама содержит сторонний код: среда .NET, нативные Skia и HarfBuzz,
+CommunityToolkit.Mvvm, System.Drawing.Common. Уведомления о нём лежат в их NuGet-пакетах.
+Цель `PublishThirdPartyNotices` в проекте приложения копирует их при публикации в папку
+`licenses`, из пакетов тех версий, что публикуются; если пакета или файла нет, публикация
+падает. Новая зависимость в поставке — запись в `THIRD-PARTY-NOTICES.txt` с текстом её
+лицензии, а если в её пакете есть файл уведомлений — ещё строка в цели.
+
 Установщик собирает Inno Setup 6.3 или новее (в том числе 7) по скрипту
 [AndreyAkaSkif.TrayCopy.iss](./installer/AndreyAkaSkif.TrayCopy.iss). Скрипт упаковывает
 результат публикации, поэтому запускается после неё:
