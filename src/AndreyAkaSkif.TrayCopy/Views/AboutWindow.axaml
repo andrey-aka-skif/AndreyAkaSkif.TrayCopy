@@ -7,6 +7,8 @@
         Icon="/Assets/app.ico"
         SizeToContent="WidthAndHeight"
         CanResize="False"
+        CanMinimize="False"
+        CanMaximize="False"
         ShowInTaskbar="False"
         WindowStartupLocation="CenterOwner">
 
