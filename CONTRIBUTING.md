@@ -289,12 +289,21 @@ dotnet run assets/icon/build-icon.cs -- --preview artifacts/icon-preview.png
 
 Приложение публикуется по профилю
 [win-x64.pubxml](./src/AndreyAkaSkif.TrayCopy/Properties/PublishProfiles/win-x64.pubxml):
-self-contained (среда .NET входит в поставку), в папку `artifacts/publish/win-x64`, без
-тримминга и без упаковки в один файл.
+self-contained (среда .NET входит в поставку), одним файлом, в папку
+`artifacts/publish/win-x64`, без тримминга.
 
 ```shell
 dotnet publish src/AndreyAkaSkif.TrayCopy -p:PublishProfile=win-x64
 ```
+
+Сборки приложения, библиотек и среды упакованы в exe и загружаются из него без
+распаковки. Рядом с exe остаются только нативные библиотеки отрисовки — `libSkiaSharp.dll`,
+`libHarfBuzzSharp.dll`, `av_libglesv2.dll` (ANGLE) — и лицензии. Нативные библиотеки в exe
+не упаковываются: с `IncludeNativeLibrariesForSelfExtract` они распаковывались бы при
+запуске в `%TEMP%\.net`. Сборки в exe не сжимаются: установщик сжимает и так, а распаковка
+в память замедлила бы запуск. Пути к файлам рядом с exe код берёт от
+`AppContext.BaseDirectory` и `Environment.ProcessPath`: в одном файле `Assembly.Location`
+пуст. Такие API проект отмечает предупреждением уже при сборке (`EnableSingleFileAnalyzer`).
 
 `VisualStudio.gitignore` игнорирует все `*.pubxml`: там бывают пароли веб-публикации.
 Для этого профиля в конце [.gitignore](./.gitignore) стоит исключение.
@@ -331,6 +340,8 @@ iscc installer/AndreyAkaSkif.TrayCopy.iss
   мьютекс `SingleInstance` (`AppMutex`);
 - не ставит отладочные символы: `.pdb` нативных библиотек Skia и HarfBuzz весят около
   100 МБ;
+- перед установкой удаляет из каталога приложения DLL, `.json` и `createdump.exe`:
+  установка поверх версии, опубликованной папкой, иначе оставила бы её файлы;
 - при удалении снимает автозапуск, если в ключе Run записан путь этой установки (правило
   то же, что у `RunKeyAutostart`), и не трогает настройки в `%APPDATA%`.
 
