@@ -54,4 +54,7 @@ internal sealed partial class SettingsWindow : Window
             _ = Launcher.LaunchDirectoryInfoAsync(new DirectoryInfo(folder));
         }
     }
+
+    private void OnAboutClick(object? sender, RoutedEventArgs e) =>
+        _ = new AboutWindow().ShowDialog(this);
 }

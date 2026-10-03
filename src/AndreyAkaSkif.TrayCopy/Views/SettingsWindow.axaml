@@ -161,12 +161,17 @@
 
         <!-- Панель кнопок окна объявлена после настроек: Tab обходит элементы в порядке
              разметки -->
-        <Grid Grid.Row="1" ColumnDefinitions="Auto,*,Auto,Auto" Margin="0,16,0,0">
+        <Grid Grid.Row="1" ColumnDefinitions="Auto,Auto,*,Auto,Auto" Margin="0,16,0,0">
             <Button Grid.Column="0" Content="Выйти из приложения" Command="{Binding ExitCommand}" />
+            <HyperlinkButton Grid.Column="1"
+                             Content="О программе"
+                             VerticalAlignment="Center"
+                             Margin="8,0,0,0"
+                             Click="OnAboutClick" />
 
             <!-- Отсчёт до скрытия окна, показанного при запуске: сектор убывает по часовой
                  стрелке от верхней точки -->
-            <StackPanel Grid.Column="1"
+            <StackPanel Grid.Column="2"
                         Orientation="Horizontal"
                         HorizontalAlignment="Center"
                         VerticalAlignment="Center"
@@ -186,12 +191,12 @@
                            Text="{Binding Countdown.RemainingSeconds, StringFormat='{}{0} с'}" />
             </StackPanel>
 
-            <Button Grid.Column="2"
+            <Button Grid.Column="3"
                     Classes="accent"
                     Content="Сохранить"
                     Command="{Binding SaveCommand}"
                     Margin="0,0,8,0" />
-            <Button Grid.Column="3"
+            <Button Grid.Column="4"
                     Content="Отмена"
                     Command="{Binding CancelCommand}"
                     IsCancel="True" />
