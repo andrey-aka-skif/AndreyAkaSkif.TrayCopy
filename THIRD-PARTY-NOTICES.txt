@@ -6,7 +6,8 @@
 licenses рядом с этим файлом.
 
 1. .NET — https://github.com/dotnet/runtime
-   Среда выполнения, Microsoft.Extensions.DependencyInjection, Microsoft.Extensions.Options,
+   Среда выполнения (только в установщике со средой .NET),
+   Microsoft.Extensions.DependencyInjection, Microsoft.Extensions.Options,
    Microsoft.Extensions.Primitives, System.Security.Cryptography.ProtectedData,
    Microsoft.Win32.SystemEvents.
    Лицензия: MIT. Сторонний код: licenses\dotnet.txt

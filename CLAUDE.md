@@ -31,20 +31,24 @@ Windows 11 присылает её как ЛКМ). Отображаемое им
   завершается с кодом 8, поэтому тестовый проект существует только вместе с тестами.
 - Инсталлятор — Inno Setup, установка для текущего пользователя; скрипт
   `installer/AndreyAkaSkif.TrayCopy.iss` совместим с Inno Setup 6.3+ (UTF-8 без BOM; в образе
-  `windows-latest` — 6.7.x, `iscc` не в PATH). Упаковывает `artifacts/publish/win-x64` после
-  `dotnet publish -p:PublishProfile=win-x64`, версию берёт из exe. `AppId` не менять.
+  `windows-latest` — 6.7.x, `iscc` не в PATH). Два варианта с общим `AppId`: со средой .NET
+  (профиль `win-x64`, `TrayCopy-X.Y.Z-setup.exe`) и без неё (профиль
+  `win-x64-framework-dependent`, `iscc /DFrameworkDependent`,
+  `TrayCopy-X.Y.Z-setup-framework-dependent.exe`; без .NET 10 в системе установка не
+  начинается). Упаковывает `artifacts/publish/<профиль>`, версию берёт из exe. `AppId` не
+  менять.
 - Публикация одним файлом (`PublishSingleFile`): нативные Skia, HarfBuzz и ANGLE лежат рядом с
   exe, без распаковки в `%TEMP%`. Пути к файлам приложения — от `AppContext.BaseDirectory` и
   `Environment.ProcessPath`, не от `Assembly.Location`.
-- Профиль публикации `*.pubxml` игнорируется `VisualStudio.gitignore` — в конце `.gitignore`
-  для него исключение.
+- Профили публикации `*.pubxml` игнорируются `VisualStudio.gitignore` — в конце `.gitignore`
+  для них исключение.
 - Лицензии в поставке: `LICENSE` → `LICENSE.txt`, `THIRD-PARTY-NOTICES.txt` (вручную, по всем
   компонентам публикации) и `licenses/` (уведомления из пакетов, цель `PublishThirdPartyNotices`
   в csproj). Новая зависимость в поставке — запись в `THIRD-PARTY-NOTICES.txt`.
 - Версии: локально `0.0.0-local` (`Directory.Build.props`), master — `X.Y.(Z+1)-dev.N` от
   последнего тега, релиз — `X.Y.Z` из тега `vX.Y.Z`; в сборку передаются через `-p:Version`.
 - CI — `.github/workflows/ci.yml` на `windows-latest`; на master джоб `installer` выкладывает
-  установщик артефактом. Выпуск — `publish.yml` по публикации Release.
+  оба установщика артефактами. Выпуск — `publish.yml` по публикации Release.
 
 ## Форматирование
 

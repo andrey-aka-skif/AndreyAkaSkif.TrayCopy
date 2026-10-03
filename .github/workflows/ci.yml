@@ -7,8 +7,8 @@
 # Раннер — Windows: приложение собирается под net10.0-windows и опирается на Win32 API.
 #
 # Второй джоб, installer, работает только на master: после зелёных сборки и тестов
-# собирает пробный установщик с dev-версией и выкладывает его артефактом прогона.
-# Релизный установщик собирает publish.yml.
+# собирает пробные установщики с dev-версией — со средой .NET и без неё — и выкладывает их
+# артефактами прогона. Релизные установщики собирает publish.yml.
 
 name: CI
 
@@ -99,15 +99,30 @@ jobs:
       - name: Publish
         run: dotnet publish src/AndreyAkaSkif.TrayCopy -p:PublishProfile=win-x64 -p:Version=${{ steps.version.outputs.version }}
 
+      - name: Publish framework-dependent
+        run: dotnet publish src/AndreyAkaSkif.TrayCopy -p:PublishProfile=win-x64-framework-dependent -p:Version=${{ steps.version.outputs.version }}
+
       # Inno Setup входит в образ windows-latest, но iscc не в PATH. Версию установщик
-      # берёт из опубликованного exe
+      # берёт из опубликованного exe. Каждый iscc — отдельный шаг: в многострочном run
+      # pwsh проверяет код возврата только последней команды
       - name: Build installer
         run: '& "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" installer/AndreyAkaSkif.TrayCopy.iss'
+
+      - name: Build installer framework-dependent
+        run: '& "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" /DFrameworkDependent installer/AndreyAkaSkif.TrayCopy.iss'
 
       - name: Upload installer
         uses: actions/upload-artifact@v7
         with:
           name: TrayCopy-${{ steps.version.outputs.version }}-setup
           path: artifacts/installer/TrayCopy-${{ steps.version.outputs.version }}-setup.exe
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Upload installer framework-dependent
+        uses: actions/upload-artifact@v7
+        with:
+          name: TrayCopy-${{ steps.version.outputs.version }}-setup-framework-dependent
+          path: artifacts/installer/TrayCopy-${{ steps.version.outputs.version }}-setup-framework-dependent.exe
           if-no-files-found: error
           retention-days: 30

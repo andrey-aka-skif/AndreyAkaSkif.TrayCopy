@@ -1,10 +1,10 @@
 # yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
 #
-# Выпуск: установщик собирается и прикладывается к GitHub Release. Версия берётся из
-# git-тега vX.Y.Z и передаётся сборке через -p:Version — в проекте она не хранится.
-# Единственный триггер — публикация Release: релиз это преднамеренный акт с release
-# notes, голый push тега ничего не выпускает. Упавший прогон переигрывается кнопкой
-# Re-run: установщик в релизе перезаписывается.
+# Выпуск: установщики — со средой .NET и без неё — собираются и прикладываются к GitHub
+# Release. Версия берётся из git-тега vX.Y.Z и передаётся сборке через -p:Version — в
+# проекте она не хранится. Единственный триггер — публикация Release: релиз это
+# преднамеренный акт с release notes, голый push тега ничего не выпускает. Упавший прогон
+# переигрывается кнопкой Re-run: установщики в релизе перезаписываются.
 #
 # Прогон CI здесь не переиспользуется: выпуск сам пересобирает и перепроверяет то, что
 # выпускает.
@@ -58,13 +58,20 @@ jobs:
       - name: Publish
         run: dotnet publish src/AndreyAkaSkif.TrayCopy -p:PublishProfile=win-x64 -p:Version=${{ steps.release.outputs.version }}
 
+      - name: Publish framework-dependent
+        run: dotnet publish src/AndreyAkaSkif.TrayCopy -p:PublishProfile=win-x64-framework-dependent -p:Version=${{ steps.release.outputs.version }}
+
       # Inno Setup входит в образ windows-latest, но iscc не в PATH. Версию установщик
-      # берёт из опубликованного exe
+      # берёт из опубликованного exe. Каждый iscc — отдельный шаг: в многострочном run
+      # pwsh проверяет код возврата только последней команды
       - name: Build installer
         run: '& "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" installer/AndreyAkaSkif.TrayCopy.iss'
 
-      # --clobber: при Re-run файл в релизе заменяется, а не даёт ошибку
-      - name: Upload installer to release
+      - name: Build installer framework-dependent
+        run: '& "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" /DFrameworkDependent installer/AndreyAkaSkif.TrayCopy.iss'
+
+      # --clobber: при Re-run файлы в релизе заменяются, а не дают ошибку
+      - name: Upload installers to release
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release upload "${{ github.ref_name }}" "artifacts/installer/TrayCopy-${{ steps.release.outputs.version }}-setup.exe" --clobber
+        run: gh release upload "${{ github.ref_name }}" "artifacts/installer/TrayCopy-${{ steps.release.outputs.version }}-setup.exe" "artifacts/installer/TrayCopy-${{ steps.release.outputs.version }}-setup-framework-dependent.exe" --clobber

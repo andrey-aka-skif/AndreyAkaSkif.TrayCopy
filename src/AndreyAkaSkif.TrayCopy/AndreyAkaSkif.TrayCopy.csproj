@@ -52,7 +52,9 @@
        licenses. Берутся из пакетов тех версий, что публикуются; пропавший файл — ошибка, а не
        тихая потеря уведомления. Новая зависимость с таким файлом — строка здесь и запись в
        THIRD-PARTY-NOTICES.txt. SDK разрешает пакеты и других сред (WindowsDesktop,
-       AspNetCore), но в поставку входит только Microsoft.NETCore.App -->
+       AspNetCore), но в поставку входит только Microsoft.NETCore.App. Пакет среды SDK
+       разрешает и при публикации без неё: уведомления в нём те же, что в пакетах dotnet/runtime,
+       которые входят в поставку всегда (Microsoft.Extensions.* и др.) -->
   <Target Name="PublishThirdPartyNotices" AfterTargets="Publish">
     <PropertyGroup>
       <!-- Корень, заданный через NUGET_PACKAGES, NuGet оставляет как есть, без завершающего

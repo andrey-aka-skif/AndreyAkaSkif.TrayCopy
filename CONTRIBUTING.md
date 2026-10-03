@@ -287,17 +287,27 @@ dotnet run assets/icon/build-icon.cs -- --preview artifacts/icon-preview.png
 
 ## Публикация и установщик
 
-Приложение публикуется по профилю
-[win-x64.pubxml](./src/AndreyAkaSkif.TrayCopy/Properties/PublishProfiles/win-x64.pubxml):
-self-contained (среда .NET входит в поставку), одним файлом, в папку
-`artifacts/publish/win-x64`, без тримминга.
+Приложение публикуется в двух вариантах, оба одним файлом и без тримминга:
+
+| Профиль | Среда .NET | Папка |
+|---|---|---|
+| [win-x64.pubxml](./src/AndreyAkaSkif.TrayCopy/Properties/PublishProfiles/win-x64.pubxml) | входит в поставку (self-contained) | `artifacts/publish/win-x64` |
+| [win-x64-framework-dependent.pubxml](./src/AndreyAkaSkif.TrayCopy/Properties/PublishProfiles/win-x64-framework-dependent.pubxml) | берётся из системы (framework-dependent) | `artifacts/publish/win-x64-framework-dependent` |
 
 ```shell
 dotnet publish src/AndreyAkaSkif.TrayCopy -p:PublishProfile=win-x64
 ```
 
-Сборки приложения, библиотек и среды упакованы в exe и загружаются из него без
-распаковки. Рядом с exe остаются только нативные библиотеки отрисовки — `libSkiaSharp.dll`,
+```shell
+dotnet publish src/AndreyAkaSkif.TrayCopy -p:PublishProfile=win-x64-framework-dependent
+```
+
+Варианту без среды нужна только `Microsoft.NETCore.App` 10 — «.NET Runtime 10»; она
+входит и в .NET Desktop Runtime, и в .NET SDK. Если среды нет, exe при запуске сам
+показывает окно .NET со ссылкой на её загрузку.
+
+Сборки приложения и библиотек (а в self-contained и среды) упакованы в exe и загружаются
+из него без распаковки. Рядом с exe остаются только нативные библиотеки отрисовки — `libSkiaSharp.dll`,
 `libHarfBuzzSharp.dll`, `av_libglesv2.dll` (ANGLE) — и лицензии. Нативные библиотеки в exe
 не упаковываются: с `IncludeNativeLibrariesForSelfExtract` они распаковывались бы при
 запуске в `%TEMP%\.net`. Сборки в exe не сжимаются: установщик сжимает и так, а распаковка
@@ -306,7 +316,7 @@ dotnet publish src/AndreyAkaSkif.TrayCopy -p:PublishProfile=win-x64
 пуст. Такие API проект отмечает предупреждением уже при сборке (`EnableSingleFileAnalyzer`).
 
 `VisualStudio.gitignore` игнорирует все `*.pubxml`: там бывают пароли веб-публикации.
-Для этого профиля в конце [.gitignore](./.gitignore) стоит исключение.
+Для профилей приложения в конце [.gitignore](./.gitignore) стоит исключение.
 
 Рядом с exe лежат лицензии: [LICENSE](./LICENSE) под именем `LICENSE.txt` и
 [THIRD-PARTY-NOTICES.txt](./THIRD-PARTY-NOTICES.txt) — перечень сторонних компонентов
@@ -320,17 +330,31 @@ CommunityToolkit.Mvvm, System.Drawing.Common. Уведомления о нём �
 падает. Новая зависимость в поставке — запись в `THIRD-PARTY-NOTICES.txt` с текстом её
 лицензии, а если в её пакете есть файл уведомлений — ещё строка в цели.
 
-Установщик собирает Inno Setup 6.3 или новее (в том числе 7) по скрипту
+Установщики собирает Inno Setup 6.3 или новее (в том числе 7) по одному скрипту
 [AndreyAkaSkif.TrayCopy.iss](./installer/AndreyAkaSkif.TrayCopy.iss). Скрипт упаковывает
-результат публикации, поэтому запускается после неё:
+результат публикации, поэтому запускается после неё. Вариант без среды задаёт определение
+`FrameworkDependent`:
 
 ```shell
 iscc installer/AndreyAkaSkif.TrayCopy.iss
 ```
 
-`iscc` лежит в каталоге Inno Setup и в PATH обычно не попадает. Готовый файл —
-`artifacts/installer/TrayCopy-<версия>-setup.exe`. Версию установщик берёт из
-опубликованного exe, без sha коммита, так что параметров у `iscc` нет.
+```shell
+iscc /DFrameworkDependent installer/AndreyAkaSkif.TrayCopy.iss
+```
+
+`iscc` лежит в каталоге Inno Setup и в PATH обычно не попадает. Готовые файлы —
+`artifacts/installer/TrayCopy-<версия>-setup.exe` и
+`artifacts/installer/TrayCopy-<версия>-setup-framework-dependent.exe`. Версию установщик
+берёт из опубликованного exe, без sha коммита, так что параметра версии у `iscc` нет.
+
+Установщик без среды проверяет её до начала установки: ищет каталог
+`shared\Microsoft.NETCore.App\10.*` там же, где будет искать exe, — в `DOTNET_ROOT_X64`,
+`DOTNET_ROOT`, затем в месте установки из реестра
+(`HKLM\SOFTWARE\dotnet\Setup\InstalledVersions\x64`, 32-битное представление) и в
+`%ProgramFiles%\dotnet`. Если среды нет, установщик сообщает об этом, предлагает открыть
+страницу загрузки .NET и завершается; в тихом режиме — молча, с кодом 1. Ставить среду сам
+он не может: она ставится на всю систему с правами администратора.
 
 Установщик:
 
@@ -346,7 +370,8 @@ iscc installer/AndreyAkaSkif.TrayCopy.iss
   то же, что у `RunKeyAutostart`), и не трогает настройки в `%APPDATA%`.
 
 `AppId` в скрипте не меняется никогда: по нему Windows и установщик узнают уже
-установленное приложение, и с другим `AppId` новая версия встала бы рядом со старой.
+установленное приложение, и с другим `AppId` новая версия встала бы рядом со старой. У
+обоих вариантов он общий: один ставится поверх другого.
 
 ## Версии и выпуск
 
@@ -367,18 +392,18 @@ Dev-версия считается от последнего тега `vX.Y.Z`,
 указывал на состояние с готовым журналом. Затем на GitHub создаётся Release с тегом
 `vX.Y.Z`. Выпуск запускается **публикацией релиза**, а не push тега: релиз —
 преднамеренный акт с release notes. Воркфлоу [publish.yml](./.github/workflows/publish.yml)
-проверяет формат тега, собирает и тестирует решение с этой версией, собирает установщик и
-прикладывает его к релизу. Упавший прогон переигрывается кнопкой Re-run: файл в релизе
-перезаписывается.
+проверяет формат тега, собирает и тестирует решение с этой версией, собирает оба
+установщика и прикладывает их к релизу. Упавший прогон переигрывается кнопкой Re-run:
+файлы в релизе перезаписываются.
 
 ## CI
 
 Воркфлоу [ci.yml](./.github/workflows/ci.yml) собирает решение и прогоняет тесты на пуш в
 любую ветку. Раннер — `windows-latest`: сборка под `net10.0-windows` требует Windows, а
 тесты хранилища настроек — DPAPI. На пуш в `master` после зелёных сборки и тестов второй
-джоб, `installer`, собирает установщик с dev-версией и выкладывает его артефактом прогона.
-В остальных ветках этот джоб пропускается. Inno Setup входит в образ `windows-latest`,
-`iscc` вызывается по полному пути.
+джоб, `installer`, собирает оба установщика с dev-версией и выкладывает их артефактами
+прогона. В остальных ветках этот джоб пропускается. Inno Setup входит в образ
+`windows-latest`, `iscc` вызывается по полному пути.
 
 Версии экшенов и пакетов поднимает dependabot
 ([dependabot.yml](./.github/dependabot.yml)); мажоры — вручную.
