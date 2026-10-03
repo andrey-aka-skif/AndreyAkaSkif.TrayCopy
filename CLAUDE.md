@@ -40,6 +40,9 @@ Windows 11 присылает её как ЛКМ). Отображаемое им
 - Публикация одним файлом (`PublishSingleFile`): нативные Skia, HarfBuzz и ANGLE лежат рядом с
   exe, без распаковки в `%TEMP%`. Пути к файлам приложения — от `AppContext.BaseDirectory` и
   `Environment.ProcessPath`, не от `Assembly.Location`.
+- Профиль `win-x64` публикуется с триммингом (`PublishTrimmed`), csproj включает
+  `EnableTrimAnalyzer`. Предупреждений IL2xxx быть не должно: рефлексия без аннотаций под
+  запретом, привязки XAML — компилируемые (`x:DataType`).
 - Профили публикации `*.pubxml` игнорируются `VisualStudio.gitignore` — в конце `.gitignore`
   для них исключение.
 - Лицензии в поставке: `LICENSE` → `LICENSE.txt`, `THIRD-PARTY-NOTICES.txt` (вручную, по всем
