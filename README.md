@@ -2,6 +2,8 @@
 
 [![License](https://img.shields.io/github/license/andrey-aka-skif/AndreyAkaSkif.TrayCopy.svg?label=License)](https://github.com/andrey-aka-skif/AndreyAkaSkif.TrayCopy/blob/master/LICENSE)
 [![CI](https://github.com/andrey-aka-skif/AndreyAkaSkif.TrayCopy/actions/workflows/ci.yml/badge.svg)](https://github.com/andrey-aka-skif/AndreyAkaSkif.TrayCopy/actions/workflows/ci.yml)
+[![Publish](https://github.com/andrey-aka-skif/AndreyAkaSkif.TrayCopy/actions/workflows/publish.yml/badge.svg)](https://github.com/andrey-aka-skif/AndreyAkaSkif.TrayCopy/actions/workflows/publish.yml)
+[![Release](https://img.shields.io/github/v/release/andrey-aka-skif/AndreyAkaSkif.TrayCopy?label=Release)](https://github.com/andrey-aka-skif/AndreyAkaSkif.TrayCopy/releases/latest)
 
 Утилита для Windows, которая живёт в трее и копирует в буфер обмена заранее заданные
 строки: клик по иконке — текущая строка в буфере, правый клик — выбрана следующая.
