@@ -62,6 +62,23 @@ internal sealed partial class EntryViewModel : ObservableObject, INotifyDataErro
     /// </summary>
     public string SavedValue => _owner.TrimWhitespace ? Value.Trim() : Value;
 
+    /// <summary>
+    /// Признак текущей записи; для переключателя в строке
+    /// </summary>
+    public bool IsCurrent
+    {
+        get => _owner.CurrentEntry == this;
+        set
+        {
+            // Переключатель, с которого снимают отметку, ничего не выбирает: выбор делает
+            // отмеченный
+            if (value)
+            {
+                _owner.CurrentEntry = this;
+            }
+        }
+    }
+
     /// <inheritdoc/>
     public bool HasErrors => _errors.Count > 0;
 
@@ -88,6 +105,12 @@ internal sealed partial class EntryViewModel : ObservableObject, INotifyDataErro
     /// Возвращает запись в том виде, в каком она будет сохранена
     /// </summary>
     public Entry ToEntry() => new(SavedName, SavedValue);
+
+    /// <summary>
+    /// Сообщает об изменении <see cref="IsCurrent"/>; вызывается владельцем при смене
+    /// текущей записи
+    /// </summary>
+    public void NotifyIsCurrentChanged() => OnPropertyChanged(nameof(IsCurrent));
 
     // Имя проверяет владелец: изменение одного имени может снять или создать совпадение
     // у других строк

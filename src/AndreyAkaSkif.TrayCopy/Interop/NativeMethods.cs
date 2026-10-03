@@ -58,6 +58,20 @@ internal static partial class NativeMethods
     public static partial short GetAsyncKeyState(int key);
 
     /// <summary>
+    /// Возвращает положение курсора мыши в экранных координатах
+    /// </summary>
+    [LibraryImport("user32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static partial bool GetCursorPos(out CursorPoint point);
+
+    /// <summary>
+    /// Переносит курсор мыши в точку экрана
+    /// </summary>
+    [LibraryImport("user32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static partial bool SetCursorPos(int x, int y);
+
+    /// <summary>
     /// Разрешает процессу <paramref name="processId"/> вывести своё окно на передний план;
     /// вызывающий процесс должен сам иметь это право
     /// </summary>
@@ -152,4 +166,21 @@ internal static partial class NativeMethods
     /// </summary>
     [LibraryImport("kernel32.dll")]
     public static partial nint GlobalFree(nint memory);
+
+    /// <summary>
+    /// Точка экрана для <see cref="GetCursorPos"/> (структура POINT Win32)
+    /// </summary>
+    [StructLayout(LayoutKind.Sequential)]
+    public struct CursorPoint
+    {
+        /// <summary>
+        /// Координата по горизонтали
+        /// </summary>
+        public int X;
+
+        /// <summary>
+        /// Координата по вертикали
+        /// </summary>
+        public int Y;
+    }
 }

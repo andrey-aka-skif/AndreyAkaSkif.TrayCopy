@@ -87,17 +87,117 @@ public sealed class SettingsViewModelTests : IDisposable
     }
 
     [Fact]
-    public void Add_ShouldAppendSelectedInvalidEntryAndBlockSave()
+    public void Constructor_ShouldMarkCurrentEntry()
+    {
+        // Assert
+        Assert.Same(_viewModel.Entries[1], _viewModel.CurrentEntry);
+        Assert.Equal([false, true, false], _viewModel.Entries.Select(entry => entry.IsCurrent));
+    }
+
+    [Fact]
+    public void Add_ShouldAppendInvalidEntryAndBlockSave()
     {
         // Act
         _viewModel.AddCommand.Execute(null);
 
         // Assert
         var added = _viewModel.Entries[^1];
-        Assert.Same(added, _viewModel.SelectedEntry);
         Assert.Equal(["Укажите имя"], NameErrors(added));
         Assert.Equal(["Укажите значение"], ValueErrors(added));
         Assert.False(_viewModel.SaveCommand.CanExecute(null));
+        Assert.Same(_viewModel.Entries[1], _viewModel.CurrentEntry);
+    }
+
+    [Fact]
+    public void Add_ShouldMarkEntry_WhenListIsEmpty()
+    {
+        // Arrange
+        var store = new InMemorySettingsStore(new SettingsLoadResult(new AppSettings(), null));
+        using var viewModel = new SettingsViewModel(new SettingsService(store), _autostart, _time);
+        Assert.Null(viewModel.CurrentEntry);
+
+        // Act
+        viewModel.AddCommand.Execute(null);
+
+        // Assert
+        Assert.True(Assert.Single(viewModel.Entries).IsCurrent);
+    }
+
+    [Fact]
+    public void IsCurrent_ShouldMoveMarkAndNotifyBothEntries()
+    {
+        // Arrange
+        var gitea = _viewModel.Entries[1];
+        var gitlab = _viewModel.Entries[2];
+        var changed = new List<EntryViewModel>();
+        gitea.PropertyChanged += (_, e) => RecordIsCurrent(gitea, e.PropertyName);
+        gitlab.PropertyChanged += (_, e) => RecordIsCurrent(gitlab, e.PropertyName);
+
+        // Act
+        gitlab.IsCurrent = true;
+
+        // Assert
+        Assert.Same(gitlab, _viewModel.CurrentEntry);
+        Assert.False(gitea.IsCurrent);
+        Assert.Equal([gitea, gitlab], changed);
+
+        void RecordIsCurrent(EntryViewModel entry, string? propertyName)
+        {
+            if (propertyName == nameof(EntryViewModel.IsCurrent))
+            {
+                changed.Add(entry);
+            }
+        }
+    }
+
+    [Fact]
+    public void IsCurrent_ShouldKeepMark_WhenUnchecked()
+    {
+        // Act
+        _viewModel.Entries[1].IsCurrent = false;
+
+        // Assert
+        Assert.True(_viewModel.Entries[1].IsCurrent);
+    }
+
+    [Fact]
+    public void SettingsChanged_ShouldMoveMark_WhenCurrentIsChangedFromTray()
+    {
+        // Arrange: строку переименовали в окне, но узнаётся она по сохранённому имени
+        _viewModel.Entries[2].Name = "forgejo";
+
+        // Act
+        _settings.Update(settings => settings with { Entries = settings.Entries.SelectNext() });
+
+        // Assert
+        Assert.Same(_viewModel.Entries[2], _viewModel.CurrentEntry);
+    }
+
+    [Fact]
+    public void SettingsChanged_ShouldKeepMark_WhenCurrentEntryIsRemovedInWindow()
+    {
+        // Arrange
+        _viewModel.RemoveCommand.Execute(_viewModel.Entries[2]);
+        var current = _viewModel.CurrentEntry;
+
+        // Act
+        _settings.Update(settings => settings with { Entries = settings.Entries.SelectNext() });
+
+        // Assert
+        Assert.Same(current, _viewModel.CurrentEntry);
+    }
+
+    [Fact]
+    public void SettingsChanged_ShouldBeIgnored_AfterDispose()
+    {
+        // Arrange
+        _viewModel.Dispose();
+
+        // Act
+        _settings.Update(settings => settings with { Entries = settings.Entries.SelectNext() });
+
+        // Assert
+        Assert.Same(_viewModel.Entries[1], _viewModel.CurrentEntry);
     }
 
     [Fact]
@@ -148,10 +248,9 @@ public sealed class SettingsViewModelTests : IDisposable
     {
         // Arrange
         _viewModel.Entries[2].Name = "github";
-        _viewModel.SelectedEntry = _viewModel.Entries[2];
 
         // Act
-        _viewModel.RemoveCommand.Execute(null);
+        _viewModel.RemoveCommand.Execute(_viewModel.Entries[2]);
 
         // Assert
         Assert.False(_viewModel.Entries[0].HasErrors);
@@ -192,13 +291,9 @@ public sealed class SettingsViewModelTests : IDisposable
     }
 
     [Fact]
-    public void Commands_ShouldBeUnavailable_WhenNothingIsSelected()
+    public void UndoRemove_ShouldBeUnavailable_WhenNothingIsRemoved()
     {
         // Assert
-        Assert.Null(_viewModel.SelectedEntry);
-        Assert.False(_viewModel.RemoveCommand.CanExecute(null));
-        Assert.False(_viewModel.MoveUpCommand.CanExecute(null));
-        Assert.False(_viewModel.MoveDownCommand.CanExecute(null));
         Assert.False(_viewModel.UndoRemoveCommand.CanExecute(null));
         Assert.Null(_viewModel.RemovedEntryMessage);
     }
@@ -207,67 +302,84 @@ public sealed class SettingsViewModelTests : IDisposable
     public void MoveCommands_ShouldBeUnavailableAtEdges()
     {
         // Act & Assert
-        _viewModel.SelectedEntry = _viewModel.Entries[0];
-        Assert.False(_viewModel.MoveUpCommand.CanExecute(null));
-        Assert.True(_viewModel.MoveDownCommand.CanExecute(null));
+        Assert.False(_viewModel.MoveUpCommand.CanExecute(_viewModel.Entries[0]));
+        Assert.True(_viewModel.MoveDownCommand.CanExecute(_viewModel.Entries[0]));
 
-        _viewModel.SelectedEntry = _viewModel.Entries[^1];
-        Assert.True(_viewModel.MoveUpCommand.CanExecute(null));
+        Assert.True(_viewModel.MoveUpCommand.CanExecute(_viewModel.Entries[^1]));
+        Assert.False(_viewModel.MoveDownCommand.CanExecute(_viewModel.Entries[^1]));
+    }
+
+    [Fact]
+    public void MoveCommands_ShouldBeUnavailable_WithoutEntry()
+    {
+        // Assert: пока привязка не задала параметр, команда проверяется с null
+        Assert.False(_viewModel.MoveUpCommand.CanExecute(null));
         Assert.False(_viewModel.MoveDownCommand.CanExecute(null));
     }
 
     [Fact]
-    public void MoveUp_ShouldMoveSelectedEntryAndKeepSelection()
+    public void MoveUp_ShouldMoveEntryAndKeepCurrent()
     {
-        // Arrange
-        var gitlab = _viewModel.Entries[2];
-        _viewModel.SelectedEntry = gitlab;
-
         // Act
-        _viewModel.MoveUpCommand.Execute(null);
+        _viewModel.MoveUpCommand.Execute(_viewModel.Entries[2]);
 
         // Assert
         Assert.Equal(["github", "gitlab", "gitea"], _viewModel.Entries.Select(entry => entry.Name));
-        Assert.Same(gitlab, _viewModel.SelectedEntry);
+        Assert.Equal("gitea", _viewModel.CurrentEntry?.Name);
     }
 
     [Fact]
-    public void MoveDown_ShouldMoveSelectedEntryAndKeepSelection()
+    public void MoveDown_ShouldMoveEntryAndKeepCurrent()
     {
-        // Arrange
-        var github = _viewModel.Entries[0];
-        _viewModel.SelectedEntry = github;
-
         // Act
-        _viewModel.MoveDownCommand.Execute(null);
+        _viewModel.MoveDownCommand.Execute(_viewModel.Entries[0]);
 
         // Assert
         Assert.Equal(["gitea", "github", "gitlab"], _viewModel.Entries.Select(entry => entry.Name));
-        Assert.Same(github, _viewModel.SelectedEntry);
+        Assert.Equal("gitea", _viewModel.CurrentEntry?.Name);
     }
 
     [Fact]
-    public void Remove_ShouldSelectNextEntry()
+    public void Remove_ShouldKeepCurrent_WhenOtherEntryIsRemoved()
     {
-        // Arrange
-        _viewModel.SelectedEntry = _viewModel.Entries[1];
-
         // Act
-        _viewModel.RemoveCommand.Execute(null);
+        _viewModel.RemoveCommand.Execute(_viewModel.Entries[0]);
+
+        // Assert
+        Assert.Equal(["gitea", "gitlab"], _viewModel.Entries.Select(entry => entry.Name));
+        Assert.Equal("gitea", _viewModel.CurrentEntry?.Name);
+    }
+
+    [Fact]
+    public void Remove_ShouldMarkFirstEntry_WhenCurrentIsRemoved()
+    {
+        // Act
+        _viewModel.RemoveCommand.Execute(_viewModel.Entries[1]);
 
         // Assert
         Assert.Equal(["github", "gitlab"], _viewModel.Entries.Select(entry => entry.Name));
-        Assert.Equal("gitlab", _viewModel.SelectedEntry?.Name);
+        Assert.Same(_viewModel.Entries[0], _viewModel.CurrentEntry);
+        Assert.True(_viewModel.Entries[0].IsCurrent);
+    }
+
+    [Fact]
+    public void Remove_ShouldLeaveNoCurrent_WhenLastEntryIsRemoved()
+    {
+        // Act
+        while (_viewModel.Entries.Count > 0)
+        {
+            _viewModel.RemoveCommand.Execute(_viewModel.Entries[0]);
+        }
+
+        // Assert
+        Assert.Null(_viewModel.CurrentEntry);
     }
 
     [Fact]
     public void Remove_ShouldOfferUndo()
     {
-        // Arrange
-        _viewModel.SelectedEntry = _viewModel.Entries[1];
-
         // Act
-        _viewModel.RemoveCommand.Execute(null);
+        _viewModel.RemoveCommand.Execute(_viewModel.Entries[1]);
 
         // Assert
         Assert.Equal("Удалена запись «gitea»", _viewModel.RemovedEntryMessage);
@@ -281,7 +393,7 @@ public sealed class SettingsViewModelTests : IDisposable
         _viewModel.AddCommand.Execute(null);
 
         // Act
-        _viewModel.RemoveCommand.Execute(null);
+        _viewModel.RemoveCommand.Execute(_viewModel.Entries[^1]);
 
         // Assert
         Assert.Null(_viewModel.RemovedEntryMessage);
@@ -289,31 +401,61 @@ public sealed class SettingsViewModelTests : IDisposable
     }
 
     [Fact]
-    public void UndoRemove_ShouldRestoreEntryAtFormerPositionAndSelectIt()
+    public void UndoRemove_ShouldRestoreEntryAtFormerPosition()
     {
         // Arrange
-        var gitea = _viewModel.Entries[1];
-        _viewModel.SelectedEntry = gitea;
-        _viewModel.RemoveCommand.Execute(null);
+        var github = _viewModel.Entries[0];
+        _viewModel.RemoveCommand.Execute(github);
 
         // Act
         _viewModel.UndoRemoveCommand.Execute(null);
 
         // Assert
         Assert.Equal(["github", "gitea", "gitlab"], _viewModel.Entries.Select(entry => entry.Name));
-        Assert.Same(gitea, _viewModel.SelectedEntry);
+        Assert.Same(github, _viewModel.Entries[0]);
+        Assert.Equal("gitea", _viewModel.CurrentEntry?.Name);
         Assert.Null(_viewModel.RemovedEntryMessage);
         Assert.False(_viewModel.UndoRemoveCommand.CanExecute(null));
+    }
+
+    [Fact]
+    public void UndoRemove_ShouldRestoreMark_WhenCurrentWasRemoved()
+    {
+        // Arrange
+        var gitea = _viewModel.Entries[1];
+        _viewModel.RemoveCommand.Execute(gitea);
+
+        // Act
+        _viewModel.UndoRemoveCommand.Execute(null);
+
+        // Assert
+        Assert.Same(gitea, _viewModel.CurrentEntry);
+        Assert.False(_viewModel.Entries[0].IsCurrent);
+    }
+
+    [Fact]
+    public void UndoRemove_ShouldMarkEntry_WhenListIsEmpty()
+    {
+        // Arrange: текущей отмечена gitlab, github удаляется не текущей
+        _viewModel.Entries[2].IsCurrent = true;
+        _viewModel.RemoveCommand.Execute(_viewModel.Entries[0]);
+        _viewModel.RemoveCommand.Execute(_viewModel.Entries[0]);
+        _viewModel.RemoveCommand.Execute(_viewModel.Entries[0]);
+
+        // Act
+        _viewModel.UndoRemoveCommand.Execute(null);
+
+        // Assert
+        Assert.Equal("gitlab", Assert.Single(_viewModel.Entries).Name);
+        Assert.Equal("gitlab", _viewModel.CurrentEntry?.Name);
     }
 
     [Fact]
     public void UndoRemove_ShouldRestoreEntriesInReverseOrder()
     {
         // Arrange
-        _viewModel.SelectedEntry = _viewModel.Entries[0];
-        _viewModel.RemoveCommand.Execute(null);
-        _viewModel.SelectedEntry = _viewModel.Entries[1];
-        _viewModel.RemoveCommand.Execute(null);
+        _viewModel.RemoveCommand.Execute(_viewModel.Entries[0]);
+        _viewModel.RemoveCommand.Execute(_viewModel.Entries[1]);
 
         // Act & Assert
         _viewModel.UndoRemoveCommand.Execute(null);
@@ -331,8 +473,7 @@ public sealed class SettingsViewModelTests : IDisposable
         // Arrange: значение из пробелов допустимо, пока обрезка выключена
         _viewModel.TrimWhitespace = false;
         _viewModel.Entries[2].Value = "   ";
-        _viewModel.SelectedEntry = _viewModel.Entries[2];
-        _viewModel.RemoveCommand.Execute(null);
+        _viewModel.RemoveCommand.Execute(_viewModel.Entries[2]);
         _viewModel.TrimWhitespace = true;
 
         // Act
@@ -347,8 +488,7 @@ public sealed class SettingsViewModelTests : IDisposable
     public void Save_ShouldUpdateSettingsAndRequestClose()
     {
         // Arrange
-        _viewModel.SelectedEntry = _viewModel.Entries[2];
-        _viewModel.MoveUpCommand.Execute(null);
+        _viewModel.MoveUpCommand.Execute(_viewModel.Entries[2]);
         _viewModel.Entries[0].Value = "  new-github-token  ";
         _viewModel.IsSystemNotification = true;
         _viewModel.IsProtected = false;
@@ -406,12 +546,37 @@ public sealed class SettingsViewModelTests : IDisposable
     public void Save_ShouldKeepCurrentEntry_WhenItIsRemovedAndRestored()
     {
         // Arrange
-        _viewModel.SelectedEntry = _viewModel.Entries[1];
-        _viewModel.RemoveCommand.Execute(null);
+        _viewModel.RemoveCommand.Execute(_viewModel.Entries[1]);
         _viewModel.UndoRemoveCommand.Execute(null);
 
         // Act
         _viewModel.SaveCommand.Execute(null);
+
+        // Assert
+        Assert.Equal("gitea", _settings.Current.Entries.Current?.Name);
+    }
+
+    [Fact]
+    public void Save_ShouldSaveMarkedEntryAsCurrent()
+    {
+        // Arrange
+        _viewModel.Entries[2].IsCurrent = true;
+
+        // Act
+        _viewModel.SaveCommand.Execute(null);
+
+        // Assert
+        Assert.Equal("gitlab", _settings.Current.Entries.Current?.Name);
+    }
+
+    [Fact]
+    public void Cancel_ShouldNotSaveMarkedEntry()
+    {
+        // Arrange
+        _viewModel.Entries[2].IsCurrent = true;
+
+        // Act
+        _viewModel.CancelCommand.Execute(null);
 
         // Assert
         Assert.Equal("gitea", _settings.Current.Entries.Current?.Name);
