@@ -105,6 +105,20 @@
                 </StackPanel>
             </Grid>
 
+            <!-- Удалённую строку можно вернуть до сохранения; строки возвращаются в обратном
+                 порядке -->
+            <Grid ColumnDefinitions="*,Auto"
+                  ColumnSpacing="8"
+                  IsVisible="{Binding RemovedEntryMessage, Converter={x:Static ObjectConverters.IsNotNull}}">
+                <TextBlock Text="{Binding RemovedEntryMessage}"
+                           VerticalAlignment="Center"
+                           TextTrimming="CharacterEllipsis" />
+                <Button Grid.Column="1"
+                        Content="Вернуть"
+                        Command="{Binding UndoRemoveCommand}"
+                        ToolTip.Tip="Вернуть удалённую запись на прежнее место" />
+            </Grid>
+
             <TextBlock Text="Настройки" FontWeight="SemiBold" Margin="0,8,0,0" />
 
             <CheckBox Content="Обрезать пробелы по краям при сохранении"

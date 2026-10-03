@@ -19,6 +19,9 @@ internal sealed partial class SettingsViewModel : ViewModelBase, IDisposable
     private readonly IAutostart _autostart;
     private readonly bool _wasAutostartEnabled;
 
+    // Удалённые строки и их позиции; последняя удалённая возвращается первой
+    private readonly Stack<(EntryViewModel Entry, int Index)> _removed = new();
+
     /// <summary>
     /// Создаёт модель окна по текущим настройкам <paramref name="settings"/> и фактическому
     /// состоянию автозапуска <paramref name="autostart"/>
@@ -163,6 +166,17 @@ internal sealed partial class SettingsViewModel : ViewModelBase, IDisposable
     public partial string? ErrorMessage { get; private set; }
 
     /// <summary>
+    /// Сообщение о последней удалённой строке, которую можно вернуть; <see langword="null"/>,
+    /// если возвращать нечего
+    /// </summary>
+    public string? RemovedEntryMessage =>
+        _removed.TryPeek(out var removed)
+            ? string.IsNullOrWhiteSpace(removed.Entry.Name)
+                ? "Удалена запись без имени"
+                : $"Удалена запись «{removed.Entry.Name}»"
+            : null;
+
+    /// <summary>
     /// Возвращает имена, под которыми будут сохранены строки списка, кроме
     /// <paramref name="entry"/>
     /// </summary>
@@ -202,12 +216,35 @@ internal sealed partial class SettingsViewModel : ViewModelBase, IDisposable
     [RelayCommand(CanExecute = nameof(CanRemove))]
     private void Remove()
     {
-        var index = Entries.IndexOf(SelectedEntry!);
+        var entry = SelectedEntry!;
+        var index = Entries.IndexOf(entry);
         Entries.RemoveAt(index);
         SelectedEntry = Entries.Count == 0 ? null : Entries[Math.Min(index, Entries.Count - 1)];
+
+        // Пустую строку возвращать незачем
+        if (entry.Name.Length > 0 || entry.Value.Length > 0)
+        {
+            _removed.Push((entry, index));
+            OnRemovedChanged();
+        }
     }
 
     private bool CanRemove() => SelectedEntry is not null;
+
+    [RelayCommand(CanExecute = nameof(CanUndoRemove))]
+    private void UndoRemove()
+    {
+        // Возвращается та же строка: по её исходному имени сохранение узнаёт текущую запись.
+        // Пока строки не было в списке, могла переключиться обрезка, поэтому значение
+        // проверяется заново; имена перепроверяет изменение списка
+        var (entry, index) = _removed.Pop();
+        Entries.Insert(Math.Min(index, Entries.Count), entry);
+        entry.ValidateValue();
+        SelectedEntry = entry;
+        OnRemovedChanged();
+    }
+
+    private bool CanUndoRemove() => _removed.Count > 0;
 
     [RelayCommand(CanExecute = nameof(CanMoveUp))]
     private void MoveUp() => MoveSelected(-1);
@@ -286,6 +323,12 @@ internal sealed partial class SettingsViewModel : ViewModelBase, IDisposable
         var index = Entries.IndexOf(entry);
         Entries.Move(index, index + offset);
         SelectedEntry = entry;
+    }
+
+    private void OnRemovedChanged()
+    {
+        OnPropertyChanged(nameof(RemovedEntryMessage));
+        UndoRemoveCommand.NotifyCanExecuteChanged();
     }
 
     // Текущая запись определяется в момент сохранения: пока окно открыто, её могут

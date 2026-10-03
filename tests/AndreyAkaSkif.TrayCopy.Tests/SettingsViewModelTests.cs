@@ -199,6 +199,8 @@ public sealed class SettingsViewModelTests : IDisposable
         Assert.False(_viewModel.RemoveCommand.CanExecute(null));
         Assert.False(_viewModel.MoveUpCommand.CanExecute(null));
         Assert.False(_viewModel.MoveDownCommand.CanExecute(null));
+        Assert.False(_viewModel.UndoRemoveCommand.CanExecute(null));
+        Assert.Null(_viewModel.RemovedEntryMessage);
     }
 
     [Fact]
@@ -259,6 +261,89 @@ public sealed class SettingsViewModelTests : IDisposable
     }
 
     [Fact]
+    public void Remove_ShouldOfferUndo()
+    {
+        // Arrange
+        _viewModel.SelectedEntry = _viewModel.Entries[1];
+
+        // Act
+        _viewModel.RemoveCommand.Execute(null);
+
+        // Assert
+        Assert.Equal("Удалена запись «gitea»", _viewModel.RemovedEntryMessage);
+        Assert.True(_viewModel.UndoRemoveCommand.CanExecute(null));
+    }
+
+    [Fact]
+    public void Remove_ShouldNotOfferUndo_WhenEntryIsBlank()
+    {
+        // Arrange
+        _viewModel.AddCommand.Execute(null);
+
+        // Act
+        _viewModel.RemoveCommand.Execute(null);
+
+        // Assert
+        Assert.Null(_viewModel.RemovedEntryMessage);
+        Assert.False(_viewModel.UndoRemoveCommand.CanExecute(null));
+    }
+
+    [Fact]
+    public void UndoRemove_ShouldRestoreEntryAtFormerPositionAndSelectIt()
+    {
+        // Arrange
+        var gitea = _viewModel.Entries[1];
+        _viewModel.SelectedEntry = gitea;
+        _viewModel.RemoveCommand.Execute(null);
+
+        // Act
+        _viewModel.UndoRemoveCommand.Execute(null);
+
+        // Assert
+        Assert.Equal(["github", "gitea", "gitlab"], _viewModel.Entries.Select(entry => entry.Name));
+        Assert.Same(gitea, _viewModel.SelectedEntry);
+        Assert.Null(_viewModel.RemovedEntryMessage);
+        Assert.False(_viewModel.UndoRemoveCommand.CanExecute(null));
+    }
+
+    [Fact]
+    public void UndoRemove_ShouldRestoreEntriesInReverseOrder()
+    {
+        // Arrange
+        _viewModel.SelectedEntry = _viewModel.Entries[0];
+        _viewModel.RemoveCommand.Execute(null);
+        _viewModel.SelectedEntry = _viewModel.Entries[1];
+        _viewModel.RemoveCommand.Execute(null);
+
+        // Act & Assert
+        _viewModel.UndoRemoveCommand.Execute(null);
+        Assert.Equal(["gitea", "gitlab"], _viewModel.Entries.Select(entry => entry.Name));
+        Assert.Equal("Удалена запись «github»", _viewModel.RemovedEntryMessage);
+
+        _viewModel.UndoRemoveCommand.Execute(null);
+        Assert.Equal(["github", "gitea", "gitlab"], _viewModel.Entries.Select(entry => entry.Name));
+        Assert.Null(_viewModel.RemovedEntryMessage);
+    }
+
+    [Fact]
+    public void UndoRemove_ShouldRevalidateRestoredEntry()
+    {
+        // Arrange: значение из пробелов допустимо, пока обрезка выключена
+        _viewModel.TrimWhitespace = false;
+        _viewModel.Entries[2].Value = "   ";
+        _viewModel.SelectedEntry = _viewModel.Entries[2];
+        _viewModel.RemoveCommand.Execute(null);
+        _viewModel.TrimWhitespace = true;
+
+        // Act
+        _viewModel.UndoRemoveCommand.Execute(null);
+
+        // Assert
+        Assert.Equal(["Укажите значение"], ValueErrors(_viewModel.Entries[2]));
+        Assert.False(_viewModel.SaveCommand.CanExecute(null));
+    }
+
+    [Fact]
     public void Save_ShouldUpdateSettingsAndRequestClose()
     {
         // Arrange
@@ -315,6 +400,21 @@ public sealed class SettingsViewModelTests : IDisposable
 
         // Assert
         Assert.Equal("forgejo", _settings.Current.Entries.Current?.Name);
+    }
+
+    [Fact]
+    public void Save_ShouldKeepCurrentEntry_WhenItIsRemovedAndRestored()
+    {
+        // Arrange
+        _viewModel.SelectedEntry = _viewModel.Entries[1];
+        _viewModel.RemoveCommand.Execute(null);
+        _viewModel.UndoRemoveCommand.Execute(null);
+
+        // Act
+        _viewModel.SaveCommand.Execute(null);
+
+        // Assert
+        Assert.Equal("gitea", _settings.Current.Entries.Current?.Name);
     }
 
     [Fact]
