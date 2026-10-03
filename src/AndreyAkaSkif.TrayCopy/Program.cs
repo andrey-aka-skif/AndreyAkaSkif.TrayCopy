@@ -27,7 +27,11 @@ sealed class Program
     // Avalonia configuration, don't remove; also used by visual designer.
     public static AppBuilder BuildAvaloniaApp()
         => AppBuilder.Configure<App>()
-            .UsePlatformDetect()
+            // То же, что UsePlatformDetect из Avalonia.Desktop делает на Windows; при обновлении
+            // Avalonia цепочка сверяется с ним
+            .UseHarfBuzz()
+            .UseWin32()
+            .UseSkia()
 #if DEBUG
             .WithDeveloperTools()
 #endif
