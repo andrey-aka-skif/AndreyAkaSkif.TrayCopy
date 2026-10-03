@@ -60,6 +60,14 @@ SolidCompression=yes
 [Languages]
 Name: "russian"; MessagesFile: "compiler:Languages\Russian.isl"
 
+[InstallDelete]
+; Сборки среды и библиотек упакованы в exe. Установка поверх версии, опубликованной папкой,
+; оставила бы её файлы: Inno Setup не удаляет то, чего нет в новой версии. Нативные
+; библиотеки удаляются вместе с остальными DLL и ставятся заново из [Files]
+Type: files; Name: "{app}\*.dll"
+Type: files; Name: "{app}\*.json"
+Type: files; Name: "{app}\createdump.exe"
+
 [Files]
 ; Отладочные символы не ставятся: нативные .pdb Skia и HarfBuzz весят около 100 МБ
 Source: "{#PublishDir}\*"; DestDir: "{app}"; Excludes: "*.pdb"; Flags: ignoreversion recursesubdirs createallsubdirs

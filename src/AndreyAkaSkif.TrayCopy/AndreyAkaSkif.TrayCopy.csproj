@@ -7,6 +7,9 @@
     <ApplicationIcon>Assets\app.ico</ApplicationIcon>
     <!-- Код, генерируемый для LibraryImport (вызовы Win32 API), использует unsafe -->
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <!-- Публикуется одним файлом (профиль win-x64): API, которые в нём не работают
+         (Assembly.Location и др.), дают предупреждение уже при сборке -->
+    <EnableSingleFileAnalyzer>true</EnableSingleFileAnalyzer>
   </PropertyGroup>
 
   <ItemGroup>

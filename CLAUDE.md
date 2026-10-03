@@ -33,6 +33,9 @@ Windows 11 присылает её как ЛКМ). Отображаемое им
   `installer/AndreyAkaSkif.TrayCopy.iss` совместим с Inno Setup 6.3+ (UTF-8 без BOM; в образе
   `windows-latest` — 6.7.x, `iscc` не в PATH). Упаковывает `artifacts/publish/win-x64` после
   `dotnet publish -p:PublishProfile=win-x64`, версию берёт из exe. `AppId` не менять.
+- Публикация одним файлом (`PublishSingleFile`): нативные Skia, HarfBuzz и ANGLE лежат рядом с
+  exe, без распаковки в `%TEMP%`. Пути к файлам приложения — от `AppContext.BaseDirectory` и
+  `Environment.ProcessPath`, не от `Assembly.Location`.
 - Профиль публикации `*.pubxml` игнорируется `VisualStudio.gitignore` — в конце `.gitignore`
   для него исключение.
 - Лицензии в поставке: `LICENSE` → `LICENSE.txt`, `THIRD-PARTY-NOTICES.txt` (вручную, по всем
