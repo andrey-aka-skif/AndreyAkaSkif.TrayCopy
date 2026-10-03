@@ -44,80 +44,128 @@
 
             <TextBlock Text="Записи" FontWeight="SemiBold" />
 
-            <Grid ColumnDefinitions="*,Auto">
-                <!-- Tab проходит поля всех строк по порядку. Список не ограничивает обход одним
-                     заходом, сама строка в обход не входит, а строки создаются все сразу: обход
-                     идёт по визуальному дереву и не видит строк, не созданных виртуализацией -->
-                <ListBox x:Name="EntryList"
-                         Grid.Column="0"
-                         ItemsSource="{Binding Entries}"
-                         SelectedItem="{Binding SelectedEntry}"
-                         KeyboardNavigation.TabNavigation="Continue"
-                         MinHeight="80"
-                         MaxHeight="320">
-                    <ListBox.Styles>
-                        <Style Selector="ListBoxItem">
-                            <Setter Property="KeyboardNavigation.IsTabStop" Value="False" />
-                        </Style>
-                    </ListBox.Styles>
-                    <ListBox.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <StackPanel />
-                        </ItemsPanelTemplate>
-                    </ListBox.ItemsPanel>
-                    <ListBox.ItemTemplate>
-                        <DataTemplate x:DataType="vm:EntryViewModel">
-                            <!-- Поля прижаты к верху: ошибка под одним полем не растягивает
-                                 соседнее по высоте строки -->
-                            <Grid ColumnDefinitions="180,*" ColumnSpacing="8">
-                                <TextBox Grid.Column="0"
-                                         VerticalAlignment="Top"
-                                         Text="{Binding Name}"
-                                         PlaceholderText="Имя" />
-                                <TextBox Grid.Column="1"
-                                         VerticalAlignment="Top"
-                                         Text="{Binding Value}"
-                                         PlaceholderText="Значение"
-                                         PasswordChar="•"
-                                         Classes="revealPasswordButton" />
-                            </Grid>
-                        </DataTemplate>
-                    </ListBox.ItemTemplate>
-                </ListBox>
+            <!-- Выделения строк нет: действия над строкой — кнопками в ней самой, а единственная
+                 отметка в списке — текущая запись -->
+            <Border Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}"
+                    CornerRadius="{DynamicResource ControlCornerRadius}"
+                    Padding="8">
+                <Border.Styles>
+                    <!-- Высота кнопки — как у поля, а не по высоте строки шрифта. Тема Fluent не
+                         центрирует содержимое кнопки: при заданных размерах значок прижат влево
+                         и кверху. Отступов нет: у Fluent они несимметричны и сдвигают значок -->
+                    <Style Selector="Button.entryAction">
+                        <Setter Property="Width" Value="32" />
+                        <Setter Property="Height" Value="32" />
+                        <Setter Property="Padding" Value="0" />
+                        <Setter Property="VerticalAlignment" Value="Top" />
+                        <Setter Property="HorizontalContentAlignment" Value="Center" />
+                        <Setter Property="VerticalContentAlignment" Value="Center" />
+                        <Setter Property="ToolTip.ShowOnDisabled" Value="True" />
+                    </Style>
+                    <!-- Значки — из системного шрифта значков: Segoe Fluent Icons в Windows 11,
+                         Segoe MDL2 Assets в Windows 10, коды у них общие. Символы обычных шрифтов
+                         приходят из разных шрифтов замены и стоят на разной высоте. Шрифт задан
+                         содержимому, а не кнопке: подсказку он не затрагивает -->
+                    <Style Selector="Button.entryAction /template/ ContentPresenter#PART_ContentPresenter">
+                        <Setter Property="FontFamily" Value="Segoe Fluent Icons, Segoe MDL2 Assets" />
+                        <Setter Property="FontSize" Value="12" />
+                    </Style>
+                    <!-- Полоса прокрутки видна всегда, а когда прокручивать нечего, недоступна;
+                         признак scrollable ставит окно -->
+                    <Style Selector="ScrollViewer#EntryScroll:not(.scrollable) /template/ ScrollBar#PART_VerticalScrollBar">
+                        <Setter Property="IsEnabled" Value="False" />
+                    </Style>
+                </Border.Styles>
 
-                <StackPanel Grid.Column="1" Spacing="4" Margin="8,0,0,0">
-                    <!-- Тема Fluent не центрирует содержимое кнопки: при заданной ширине
-                         символ прижат влево -->
-                    <StackPanel.Styles>
-                        <Style Selector="Button">
-                            <Setter Property="Width" Value="36" />
-                            <Setter Property="HorizontalContentAlignment" Value="Center" />
-                        </Style>
-                    </StackPanel.Styles>
-                    <Button Content="+" Command="{Binding AddCommand}"
-                            ToolTip.Tip="Добавить запись" />
-                    <Button Content="–" Command="{Binding RemoveCommand}"
-                            ToolTip.Tip="Удалить выделенную запись" />
-                    <Button Content="↑" Command="{Binding MoveUpCommand}"
-                            ToolTip.Tip="Переместить выше" />
-                    <Button Content="↓" Command="{Binding MoveDownCommand}"
-                            ToolTip.Tip="Переместить ниже" />
+                <!-- Полоса прокрутки не ложится поверх строк, а занимает место справа. На ту же
+                     ширину окно сдвигает нижнюю строку: её кнопки остаются в колонке кнопок
+                     строк -->
+                <StackPanel Spacing="6">
+                    <ScrollViewer x:Name="EntryScroll"
+                                  MaxHeight="320"
+                                  AllowAutoHide="False"
+                                  VerticalScrollBarVisibility="Visible">
+                        <!-- Tab проходит строки по порядку. Строки создаются все сразу: обход
+                             идёт по визуальному дереву и не видит строк, не созданных
+                             виртуализацией -->
+                        <ItemsControl x:Name="EntryList" ItemsSource="{Binding Entries}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <StackPanel Spacing="6" />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="vm:EntryViewModel">
+                                    <!-- Элементы прижаты к верху: ошибка под одним полем не
+                                         растягивает соседние по высоте строки -->
+                                    <Grid ColumnDefinitions="Auto,160,*,Auto" ColumnSpacing="8">
+                                        <RadioButton Grid.Column="0"
+                                                     VerticalAlignment="Top"
+                                                     MinHeight="32"
+                                                     Padding="0"
+                                                     IsChecked="{Binding IsCurrent}"
+                                                     ToolTip.Tip="Текущая запись: её копирует клик по иконке в трее" />
+                                        <TextBox Grid.Column="1"
+                                                 VerticalAlignment="Top"
+                                                 Text="{Binding Name}"
+                                                 PlaceholderText="Имя" />
+                                        <TextBox Grid.Column="2"
+                                                 VerticalAlignment="Top"
+                                                 Text="{Binding Value}"
+                                                 PlaceholderText="Значение"
+                                                 PasswordChar="•"
+                                                 Classes="revealPasswordButton" />
+                                        <!-- Классы moveUp, moveDown и remove нужны окну: после
+                                             действия оно возвращает фокус и курсор к строке -->
+                                        <StackPanel Grid.Column="3"
+                                                    Orientation="Horizontal"
+                                                    Spacing="4">
+                                            <Button Classes="entryAction moveUp"
+                                                    Content="&#xE74A;"
+                                                    Command="{Binding $parent[ItemsControl].((vm:SettingsViewModel)DataContext).MoveUpCommand}"
+                                                    CommandParameter="{Binding}"
+                                                    ToolTip.Tip="Переместить выше" />
+                                            <Button Classes="entryAction moveDown"
+                                                    Content="&#xE74B;"
+                                                    Command="{Binding $parent[ItemsControl].((vm:SettingsViewModel)DataContext).MoveDownCommand}"
+                                                    CommandParameter="{Binding}"
+                                                    ToolTip.Tip="Переместить ниже" />
+                                            <Button Classes="entryAction remove"
+                                                    Content="&#xE711;"
+                                                    Command="{Binding $parent[ItemsControl].((vm:SettingsViewModel)DataContext).RemoveCommand}"
+                                                    CommandParameter="{Binding}"
+                                                    ToolTip.Tip="Удалить запись" />
+                                        </StackPanel>
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+
+                    <!-- Нижняя строка есть всегда: сообщение об удалении не меняет высоту окна.
+                         Удалённую строку можно вернуть до сохранения; строки возвращаются в
+                         обратном порядке -->
+                    <Grid x:Name="EntryFooter" ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                        <TextBlock Text="{Binding RemovedEntryMessage}"
+                                   HorizontalAlignment="Right"
+                                   VerticalAlignment="Center"
+                                   TextTrimming="CharacterEllipsis" />
+                        <!-- Пустое место под «↑»: кнопки встают под «↓» и «✕» -->
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4">
+                            <Panel Width="32" />
+                            <Button Classes="entryAction"
+                                    Content="&#xE7A7;"
+                                    Command="{Binding UndoRemoveCommand}"
+                                    ToolTip.Tip="Вернуть удалённую запись на прежнее место" />
+                            <Button x:Name="AddButton"
+                                    Classes="entryAction"
+                                    Content="&#xE710;"
+                                    Command="{Binding AddCommand}"
+                                    ToolTip.Tip="Добавить запись" />
+                        </StackPanel>
+                    </Grid>
                 </StackPanel>
-            </Grid>
-
-            <!-- Удалённую строку можно вернуть до сохранения; строки возвращаются в обратном
-                 порядке -->
-            <Grid ColumnDefinitions="*,Auto"
-                  ColumnSpacing="8"
-                  IsVisible="{Binding RemovedEntryMessage, Converter={x:Static ObjectConverters.IsNotNull}}">
-                <TextBlock Text="{Binding RemovedEntryMessage}"
-                           VerticalAlignment="Center"
-                           TextTrimming="CharacterEllipsis" />
-                <Button Grid.Column="1"
-                        Content="Вернуть"
-                        Command="{Binding UndoRemoveCommand}"
-                        ToolTip.Tip="Вернуть удалённую запись на прежнее место" />
-            </Grid>
+            </Border>
 
             <TextBlock Text="Настройки" FontWeight="SemiBold" Margin="0,8,0,0" />
 

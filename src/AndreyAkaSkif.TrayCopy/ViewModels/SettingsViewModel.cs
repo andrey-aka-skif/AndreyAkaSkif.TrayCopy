@@ -19,8 +19,9 @@ internal sealed partial class SettingsViewModel : ViewModelBase, IDisposable
     private readonly IAutostart _autostart;
     private readonly bool _wasAutostartEnabled;
 
-    // Удалённые строки и их позиции; последняя удалённая возвращается первой
-    private readonly Stack<(EntryViewModel Entry, int Index)> _removed = new();
+    // Удалённые строки, их позиции и признак текущей записи; последняя удалённая
+    // возвращается первой
+    private readonly Stack<(EntryViewModel Entry, int Index, bool WasCurrent)> _removed = new();
 
     /// <summary>
     /// Создаёт модель окна по текущим настройкам <paramref name="settings"/> и фактическому
@@ -50,7 +51,9 @@ internal sealed partial class SettingsViewModel : ViewModelBase, IDisposable
             Entries.Add(new EntryViewModel(this, entry));
         }
 
+        CurrentEntry = FindByOriginalName(current.Entries.Current?.Name);
         Entries.CollectionChanged += OnEntriesChanged;
+        settings.Changed += OnSettingsChanged;
 
         Countdown = new Countdown(timeProvider);
         Countdown.Elapsed += (_, _) => CloseRequested?.Invoke(this, EventArgs.Empty);
@@ -96,13 +99,11 @@ internal sealed partial class SettingsViewModel : ViewModelBase, IDisposable
     public ObservableCollection<EntryViewModel> Entries { get; } = [];
 
     /// <summary>
-    /// Выделенная строка, к которой относятся удаление и перемещение
+    /// Строка текущей записи — той, что копирует клик по иконке в трее; сохраняется вместе
+    /// со списком. <see langword="null"/> только у пустого списка
     /// </summary>
     [ObservableProperty]
-    [NotifyCanExecuteChangedFor(nameof(RemoveCommand))]
-    [NotifyCanExecuteChangedFor(nameof(MoveUpCommand))]
-    [NotifyCanExecuteChangedFor(nameof(MoveDownCommand))]
-    public partial EntryViewModel? SelectedEntry { get; set; }
+    public partial EntryViewModel? CurrentEntry { get; set; }
 
     /// <summary>
     /// Признак обрезки пробелов по краям имён и значений при сохранении
@@ -201,61 +202,81 @@ internal sealed partial class SettingsViewModel : ViewModelBase, IDisposable
     public void OnEntryErrorsChanged() => SaveCommand.NotifyCanExecuteChanged();
 
     /// <summary>
-    /// Останавливает отсчёт до скрытия окна
+    /// Перестаёт следить за настройками и останавливает отсчёт до скрытия окна
     /// </summary>
-    public void Dispose() => Countdown.Dispose();
+    public void Dispose()
+    {
+        _settings.Changed -= OnSettingsChanged;
+        Countdown.Dispose();
+    }
 
     [RelayCommand]
     private void Add()
     {
         var entry = new EntryViewModel(this, entry: null);
         Entries.Add(entry);
-        SelectedEntry = entry;
+
+        // Строка, добавленная в пустой список, — единственная, и текущей становится она
+        CurrentEntry ??= entry;
     }
 
-    [RelayCommand(CanExecute = nameof(CanRemove))]
-    private void Remove()
+    [RelayCommand]
+    private void Remove(EntryViewModel entry)
     {
-        var entry = SelectedEntry!;
         var index = Entries.IndexOf(entry);
+        var wasCurrent = entry == CurrentEntry;
         Entries.RemoveAt(index);
-        SelectedEntry = Entries.Count == 0 ? null : Entries[Math.Min(index, Entries.Count - 1)];
+
+        // Как и в списке, сохранённом без текущей записи, текущей становится первая
+        if (wasCurrent)
+        {
+            CurrentEntry = Entries.FirstOrDefault();
+        }
 
         // Пустую строку возвращать незачем
         if (entry.Name.Length > 0 || entry.Value.Length > 0)
         {
-            _removed.Push((entry, index));
+            _removed.Push((entry, index, wasCurrent));
             OnRemovedChanged();
         }
     }
 
-    private bool CanRemove() => SelectedEntry is not null;
-
     [RelayCommand(CanExecute = nameof(CanUndoRemove))]
     private void UndoRemove()
     {
-        // Возвращается та же строка: по её исходному имени сохранение узнаёт текущую запись.
-        // Пока строки не было в списке, могла переключиться обрезка, поэтому значение
-        // проверяется заново; имена перепроверяет изменение списка
-        var (entry, index) = _removed.Pop();
+        // Возвращается та же строка: по её исходному имени окно узнаёт её, когда текущую
+        // запись меняют из трея. Пока строки не было в списке, могла переключиться обрезка,
+        // поэтому значение проверяется заново; имена перепроверяет изменение списка
+        var (entry, index, wasCurrent) = _removed.Pop();
         Entries.Insert(Math.Min(index, Entries.Count), entry);
         entry.ValidateValue();
-        SelectedEntry = entry;
+
+        // Отметка возвращается вместе со строкой. В пустой список возвращается строка, которая
+        // была в нём последней, то есть текущей, — список снова получает текущую запись
+        if (wasCurrent)
+        {
+            CurrentEntry = entry;
+        }
+
         OnRemovedChanged();
     }
 
     private bool CanUndoRemove() => _removed.Count > 0;
 
     [RelayCommand(CanExecute = nameof(CanMoveUp))]
-    private void MoveUp() => MoveSelected(-1);
+    private void MoveUp(EntryViewModel entry) => Move(entry, -1);
 
-    private bool CanMoveUp() => SelectedEntry is not null && Entries.IndexOf(SelectedEntry) > 0;
+    // Пока привязка не задала параметр, команда проверяется с null: такой строки в списке нет
+    private bool CanMoveUp(EntryViewModel entry) => Entries.IndexOf(entry) > 0;
 
     [RelayCommand(CanExecute = nameof(CanMoveDown))]
-    private void MoveDown() => MoveSelected(+1);
+    private void MoveDown(EntryViewModel entry) => Move(entry, +1);
 
-    private bool CanMoveDown() =>
-        SelectedEntry is not null && Entries.IndexOf(SelectedEntry) < Entries.Count - 1;
+    private bool CanMoveDown(EntryViewModel entry)
+    {
+        var index = Entries.IndexOf(entry);
+        return index >= 0 && index < Entries.Count - 1;
+    }
 
     [RelayCommand(CanExecute = nameof(CanSave))]
     private void Save()
@@ -265,8 +286,7 @@ internal sealed partial class SettingsViewModel : ViewModelBase, IDisposable
             _settings.Update(current => current with
             {
                 Entries = new EntryList(
-                    Entries.Select(entry => entry.ToEntry()),
-                    GetSavedCurrentName(current.Entries.Current?.Name)),
+                    Entries.Select(entry => entry.ToEntry()), CurrentEntry?.SavedName),
                 Notification = Notification,
                 Protection = IsProtected ? ProtectionMode.Dpapi : ProtectionMode.None,
                 StartupDisplayTime = TimeSpan.FromSeconds(decimal.ToInt32(StartupDisplaySeconds)),
@@ -306,6 +326,12 @@ internal sealed partial class SettingsViewModel : ViewModelBase, IDisposable
         }
     }
 
+    partial void OnCurrentEntryChanged(EntryViewModel? oldValue, EntryViewModel? newValue)
+    {
+        oldValue?.NotifyIsCurrentChanged();
+        newValue?.NotifyIsCurrentChanged();
+    }
+
     private void SelectNotification(NotificationKind kind, bool isSelected)
     {
         // Переключатель, с которого снимают отметку, ничего не выбирает: выбор делает
@@ -316,13 +342,10 @@ internal sealed partial class SettingsViewModel : ViewModelBase, IDisposable
         }
     }
 
-    private void MoveSelected(int offset)
+    private void Move(EntryViewModel entry, int offset)
     {
-        // Список может снять выделение при перемещении строки; оно восстанавливается
-        var entry = SelectedEntry!;
         var index = Entries.IndexOf(entry);
         Entries.Move(index, index + offset);
-        SelectedEntry = entry;
     }
 
     private void OnRemovedChanged()
@@ -331,19 +354,28 @@ internal sealed partial class SettingsViewModel : ViewModelBase, IDisposable
         UndoRemoveCommand.NotifyCanExecuteChanged();
     }
 
-    // Текущая запись определяется в момент сохранения: пока окно открыто, её могут
-    // сменить из трея. Если её переименовали в окне, текущей остаётся она же
-    private string? GetSavedCurrentName(string? currentName) =>
+    // Строка ищется по имени, под которым запись сохранена: переименование в окне её не
+    // теряет
+    private EntryViewModel? FindByOriginalName(string? name) =>
         Entries.FirstOrDefault(entry => entry.OriginalName is not null
-            && entry.OriginalName == currentName)?.SavedName;
+            && entry.OriginalName == name);
+
+    // Пока окно открыто, текущую запись могут сменить из трея: отметка переходит на ту же
+    // запись, если она есть в окне. Действует последний выбор — в трее или в окне
+    private void OnSettingsChanged(object? sender, EventArgs e)
+    {
+        if (FindByOriginalName(_settings.Current.Entries.Current?.Name) is { } entry)
+        {
+            CurrentEntry = entry;
+        }
+    }
 
     private void OnEntriesChanged(object? sender, NotifyCollectionChangedEventArgs e)
     {
-        // Состав списка меняет совпадения имён, а позиция выделенной строки — доступность
-        // перемещения. Значение новая строка проверила сама при создании
+        // Состав списка меняет совпадения имён, а позиции строк — доступность перемещения.
+        // Значение новая строка проверила сама при создании
         ValidateNames();
         SaveCommand.NotifyCanExecuteChanged();
-        RemoveCommand.NotifyCanExecuteChanged();
         MoveUpCommand.NotifyCanExecuteChanged();
         MoveDownCommand.NotifyCanExecuteChanged();
     }
