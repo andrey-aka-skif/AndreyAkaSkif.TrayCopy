@@ -22,4 +22,28 @@ public class AppInfoTests
         Assert.NotEmpty(AppInfo.Version);
         Assert.DoesNotContain('+', AppInfo.Version);
     }
+
+    [Fact]
+    public void Copyright_ShouldComeFromAssembly()
+    {
+        // Assert
+        Assert.NotEmpty(AppInfo.Copyright);
+    }
+
+    [Fact]
+    public void RepositoryUrl_ShouldBeAbsoluteHttps()
+    {
+        // Assert
+        Assert.True(AppInfo.RepositoryUrl.IsAbsoluteUri);
+        Assert.Equal(Uri.UriSchemeHttps, AppInfo.RepositoryUrl.Scheme);
+    }
+
+    // Файлы копирует сборка приложения; тест ловит расхождение их имён в проекте и в AppInfo
+    [Fact]
+    public void LicenseFiles_ShouldBeNextToApplication()
+    {
+        // Assert
+        Assert.True(File.Exists(AppInfo.LicensePath), AppInfo.LicensePath);
+        Assert.True(File.Exists(AppInfo.ThirdPartyNoticesPath), AppInfo.ThirdPartyNoticesPath);
+    }
 }
