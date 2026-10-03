@@ -35,4 +35,45 @@
     <InternalsVisibleTo Include="AndreyAkaSkif.TrayCopy.Tests" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- Лицензия приложения и лицензии сторонних компонентов лежат рядом с exe: их открывает
+         окно «О программе». Расширение .txt — чтобы файл открывался двойным щелчком -->
+    <None Include="..\..\LICENSE" Link="LICENSE.txt" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\..\THIRD-PARTY-NOTICES.txt" Link="THIRD-PARTY-NOTICES.txt"
+          CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <!-- Уведомления о стороннем коде внутри среды .NET и пакетов попадают в публикацию в папку
+       licenses. Берутся из пакетов тех версий, что публикуются; пропавший файл — ошибка, а не
+       тихая потеря уведомления. Новая зависимость с таким файлом — строка здесь и запись в
+       THIRD-PARTY-NOTICES.txt. SDK разрешает пакеты и других сред (WindowsDesktop,
+       AspNetCore), но в поставку входит только Microsoft.NETCore.App -->
+  <Target Name="PublishThirdPartyNotices" AfterTargets="Publish">
+    <ItemGroup>
+      <_PackageAsset Include="@(RuntimeCopyLocalItems);@(NativeCopyLocalItems)" />
+      <_ThirdPartyNotices Include="@(ResolvedRuntimePack->WithMetadataValue('FrameworkName', 'Microsoft.NETCore.App')->'%(PackageDirectory)\THIRD-PARTY-NOTICES.TXT')"
+                          TargetName="dotnet" />
+      <_ThirdPartyNotices Include="@(_PackageAsset->WithMetadataValue('NuGetPackageId', 'System.Drawing.Common')->'$(NuGetPackageRoot)system.drawing.common\%(NuGetPackageVersion)\THIRD-PARTY-NOTICES.TXT'->Distinct())"
+                          TargetName="system.drawing.common" />
+      <_ThirdPartyNotices Include="@(_PackageAsset->WithMetadataValue('NuGetPackageId', 'SkiaSharp.NativeAssets.Win32')->'$(NuGetPackageRoot)skiasharp.nativeassets.win32\%(NuGetPackageVersion)\THIRD-PARTY-NOTICES.txt'->Distinct())"
+                          TargetName="skiasharp" />
+      <_ThirdPartyNotices Include="@(_PackageAsset->WithMetadataValue('NuGetPackageId', 'HarfBuzzSharp.NativeAssets.Win32')->'$(NuGetPackageRoot)harfbuzzsharp.nativeassets.win32\%(NuGetPackageVersion)\THIRD-PARTY-NOTICES.txt'->Distinct())"
+                          TargetName="harfbuzzsharp" />
+      <_ThirdPartyNotices Include="@(_PackageAsset->WithMetadataValue('NuGetPackageId', 'CommunityToolkit.Mvvm')->'$(NuGetPackageRoot)communitytoolkit.mvvm\%(NuGetPackageVersion)\ThirdPartyNotices.txt'->Distinct())"
+                          TargetName="communitytoolkit.mvvm" />
+      <_ThirdPartyNoticesName Include="dotnet;system.drawing.common;skiasharp;harfbuzzsharp;communitytoolkit.mvvm" />
+      <_ThirdPartyNoticesMissing Include="@(_ThirdPartyNoticesName)"
+                                 Exclude="@(_ThirdPartyNotices->'%(TargetName)')" />
+    </ItemGroup>
+
+    <Error Condition="'@(_ThirdPartyNoticesMissing)' != ''"
+           Text="Не найден пакет с уведомлениями о стороннем коде: @(_ThirdPartyNoticesMissing)" />
+    <Error Condition="!Exists('%(_ThirdPartyNotices.Identity)')"
+           Text="Нет файла уведомлений о стороннем коде: %(_ThirdPartyNotices.Identity)" />
+
+    <Copy SourceFiles="@(_ThirdPartyNotices)"
+          DestinationFiles="@(_ThirdPartyNotices->'$(PublishDir)licenses\%(TargetName).txt')"
+          SkipUnchangedFiles="true" />
+  </Target>
+
 </Project>
