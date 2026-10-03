@@ -16,43 +16,7 @@
         <views:FractionToAngleConverter x:Key="FractionToAngle" />
     </Window.Resources>
 
-    <DockPanel Margin="16">
-
-        <Grid DockPanel.Dock="Bottom" ColumnDefinitions="Auto,*,Auto,Auto" Margin="0,16,0,0">
-            <Button Grid.Column="0" Content="Выйти из приложения" Command="{Binding ExitCommand}" />
-
-            <!-- Отсчёт до скрытия окна, показанного при запуске: сектор убывает по часовой
-                 стрелке от верхней точки -->
-            <StackPanel Grid.Column="1"
-                        Orientation="Horizontal"
-                        HorizontalAlignment="Center"
-                        VerticalAlignment="Center"
-                        Spacing="6"
-                        IsVisible="{Binding Countdown.IsRunning}"
-                        ToolTip.Tip="Клик или клавиша в окне оставят его открытым">
-                <Panel Width="18" Height="18">
-                    <Ellipse Stroke="{DynamicResource SystemControlForegroundBaseMediumBrush}"
-                             StrokeThickness="1" />
-                    <!-- Толщина линии — половина размера: дуга заливает сектор до центра -->
-                    <Arc StartAngle="-90"
-                         SweepAngle="{Binding Countdown.RemainingFraction, Converter={StaticResource FractionToAngle}}"
-                         Stroke="{DynamicResource SystemControlHighlightAccentBrush}"
-                         StrokeThickness="9" />
-                </Panel>
-                <TextBlock VerticalAlignment="Center"
-                           Text="{Binding Countdown.RemainingSeconds, StringFormat='{}{0} с'}" />
-            </StackPanel>
-
-            <Button Grid.Column="2"
-                    Classes="accent"
-                    Content="Сохранить"
-                    Command="{Binding SaveCommand}"
-                    Margin="0,0,8,0" />
-            <Button Grid.Column="3"
-                    Content="Отмена"
-                    Command="{Binding CancelCommand}"
-                    IsCancel="True" />
-        </Grid>
+    <Grid RowDefinitions="*,Auto" Margin="16">
 
         <StackPanel Spacing="10">
             <!-- Настройки при запуске не прочитались. Отложенный файл лежит рядом с
@@ -80,12 +44,26 @@
             <TextBlock Text="Записи" FontWeight="SemiBold" />
 
             <Grid ColumnDefinitions="*,Auto">
+                <!-- Tab проходит поля всех строк по порядку. Список не ограничивает обход одним
+                     заходом, сама строка в обход не входит, а строки создаются все сразу: обход
+                     идёт по визуальному дереву и не видит строк, не созданных виртуализацией -->
                 <ListBox x:Name="EntryList"
                          Grid.Column="0"
                          ItemsSource="{Binding Entries}"
                          SelectedItem="{Binding SelectedEntry}"
+                         KeyboardNavigation.TabNavigation="Continue"
                          MinHeight="80"
                          MaxHeight="320">
+                    <ListBox.Styles>
+                        <Style Selector="ListBoxItem">
+                            <Setter Property="KeyboardNavigation.IsTabStop" Value="False" />
+                        </Style>
+                    </ListBox.Styles>
+                    <ListBox.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <StackPanel />
+                        </ItemsPanelTemplate>
+                    </ListBox.ItemsPanel>
                     <ListBox.ItemTemplate>
                         <DataTemplate x:DataType="vm:EntryViewModel">
                             <!-- Поля прижаты к верху: ошибка под одним полем не растягивает
@@ -163,5 +141,43 @@
                        Foreground="{DynamicResource SystemControlErrorTextForegroundBrush}"
                        TextWrapping="Wrap" />
         </StackPanel>
-    </DockPanel>
+
+        <!-- Панель кнопок окна объявлена после настроек: Tab обходит элементы в порядке
+             разметки -->
+        <Grid Grid.Row="1" ColumnDefinitions="Auto,*,Auto,Auto" Margin="0,16,0,0">
+            <Button Grid.Column="0" Content="Выйти из приложения" Command="{Binding ExitCommand}" />
+
+            <!-- Отсчёт до скрытия окна, показанного при запуске: сектор убывает по часовой
+                 стрелке от верхней точки -->
+            <StackPanel Grid.Column="1"
+                        Orientation="Horizontal"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Spacing="6"
+                        IsVisible="{Binding Countdown.IsRunning}"
+                        ToolTip.Tip="Клик или клавиша в окне оставят его открытым">
+                <Panel Width="18" Height="18">
+                    <Ellipse Stroke="{DynamicResource SystemControlForegroundBaseMediumBrush}"
+                             StrokeThickness="1" />
+                    <!-- Толщина линии — половина размера: дуга заливает сектор до центра -->
+                    <Arc StartAngle="-90"
+                         SweepAngle="{Binding Countdown.RemainingFraction, Converter={StaticResource FractionToAngle}}"
+                         Stroke="{DynamicResource SystemControlHighlightAccentBrush}"
+                         StrokeThickness="9" />
+                </Panel>
+                <TextBlock VerticalAlignment="Center"
+                           Text="{Binding Countdown.RemainingSeconds, StringFormat='{}{0} с'}" />
+            </StackPanel>
+
+            <Button Grid.Column="2"
+                    Classes="accent"
+                    Content="Сохранить"
+                    Command="{Binding SaveCommand}"
+                    Margin="0,0,8,0" />
+            <Button Grid.Column="3"
+                    Content="Отмена"
+                    Command="{Binding CancelCommand}"
+                    IsCancel="True" />
+        </Grid>
+    </Grid>
 </Window>
