@@ -16,6 +16,12 @@ internal sealed class TrayActions(
     SettingsService settings, IClipboard clipboard, NotificationService notifications)
 {
     /// <summary>
+    /// Подсказка о том, как открыть окно настроек: это единственный путь к выходу, а найти
+    /// его кликами наугад нельзя
+    /// </summary>
+    public const string SettingsHint = "Shift+клик — настройки и выход";
+
+    /// <summary>
     /// Происходит, когда клик должен открыть окно настроек
     /// </summary>
     public event EventHandler? SettingsRequested;
@@ -73,7 +79,9 @@ internal sealed class TrayActions(
             return;
         }
 
+        // Правым кликом обычно ищут меню: подсказка о настройках показывается на нём
         var selected = settings.Current.Entries.Current!;
-        notifications.Show(new Notification("Выбрано для копирования", selected.Name));
+        notifications.Show(
+            new Notification("Выбрано для копирования", $"{selected.Name}\n{SettingsHint}"));
     }
 }

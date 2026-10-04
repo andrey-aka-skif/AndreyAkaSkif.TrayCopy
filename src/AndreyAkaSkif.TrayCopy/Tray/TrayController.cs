@@ -52,9 +52,14 @@ internal sealed class TrayController
     private void OnClicked(object? sender, TrayClickEventArgs e) =>
         Dispatcher.UIThread.Post(() => _actions.HandleClick(e.Button, e.IsShiftPressed));
 
+    // Подсказка о настройках идёт второй строкой: при длинном имени записи обрезается она, а
+    // не имя. Без записей любой клик и так открывает настройки
     private void UpdateToolTip()
     {
         var current = _settings.Current.Entries.Current;
-        _trayIcon.SetToolTip(current is null ? AppName : $"{AppName} — {current.Name}");
+        _trayIcon.SetToolTip(
+            current is null
+                ? AppName
+                : $"{AppName} — {current.Name}\n{TrayActions.SettingsHint}");
     }
 }
