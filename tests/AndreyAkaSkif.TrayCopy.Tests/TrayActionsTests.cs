@@ -64,7 +64,9 @@ public sealed class TrayActionsTests
         // Assert: после последней записи — первая
         Assert.Equal("github", _settings.Current.Entries.Current?.Name);
         Assert.Same(_settings.Current, Assert.Single(_store.Saved));
-        Assert.Equal([new Notification("Выбрано для копирования", "github")], _notifier.Shown);
+        Assert.Equal(
+            [new Notification("Выбрано для копирования", "github\nShift+клик — настройки и выход")],
+            _notifier.Shown);
         Assert.Empty(_clipboard.Texts);
     }
 
