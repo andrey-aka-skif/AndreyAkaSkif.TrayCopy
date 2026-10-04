@@ -5,6 +5,8 @@
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-10-04
+
 ### Added
 
 - В заголовке окна настроек показывается версия приложения.
@@ -65,5 +67,6 @@
   запись в «Установленных приложениях». Запущенное приложение установщик просит закрыть;
   при удалении снимается запуск при входе в Windows, настройки остаются.
 
-[Unreleased]: https://github.com/andrey-aka-skif/AndreyAkaSkif.TrayCopy/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/andrey-aka-skif/AndreyAkaSkif.TrayCopy/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/andrey-aka-skif/AndreyAkaSkif.TrayCopy/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/andrey-aka-skif/AndreyAkaSkif.TrayCopy/releases/tag/v0.1.0
