@@ -7,11 +7,12 @@
     <ApplicationIcon>Assets\app.ico</ApplicationIcon>
     <!-- Код, генерируемый для LibraryImport (вызовы Win32 API), использует unsafe -->
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <!-- Публикуется одним файлом и с триммингом (профиль win-x64): API, которые в одном файле
-         не работают (Assembly.Location и др.), и рефлексия, которую тримминг может сломать,
-         дают предупреждение уже при сборке -->
+    <!-- Публикуется одним файлом (оба профиля) и с Native AOT (профиль win-x64): API, которые
+         в одном файле не работают (Assembly.Location и др.), рефлексия, которую тримминг
+         может сломать, и код, недоступный без JIT, дают предупреждение уже при сборке -->
     <EnableSingleFileAnalyzer>true</EnableSingleFileAnalyzer>
     <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
+    <EnableAotAnalyzer>true</EnableAotAnalyzer>
   </PropertyGroup>
 
   <ItemGroup>

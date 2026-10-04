@@ -37,12 +37,15 @@ Windows 11 присылает её как ЛКМ). Отображаемое им
   `TrayCopy-X.Y.Z-setup-framework-dependent.exe`; без .NET 10 в системе установка не
   начинается). Упаковывает `artifacts/publish/<профиль>`, версию берёт из exe. `AppId` не
   менять.
-- Публикация одним файлом (`PublishSingleFile`): нативные Skia, HarfBuzz и ANGLE лежат рядом с
-  exe, без распаковки в `%TEMP%`. Пути к файлам приложения — от `AppContext.BaseDirectory` и
-  `Environment.ProcessPath`, не от `Assembly.Location`.
-- Профиль `win-x64` публикуется с триммингом (`PublishTrimmed`), csproj включает
-  `EnableTrimAnalyzer`. Предупреждений IL2xxx быть не должно: рефлексия без аннотаций под
-  запретом, привязки XAML — компилируемые (`x:DataType`).
+- Публикация одним файлом (`PublishSingleFile` без среды, AOT — со средой): нативные Skia,
+  HarfBuzz и ANGLE лежат рядом с exe, без распаковки в `%TEMP%`. Пути к файлам приложения — от
+  `AppContext.BaseDirectory` и `Environment.ProcessPath`, не от `Assembly.Location`.
+- Профиль `win-x64` публикуется с Native AOT (`PublishAot` в профиле, тримминг входит в него),
+  csproj включает `EnableTrimAnalyzer` и `EnableAotAnalyzer`. Предупреждений IL2xxx и IL3xxx
+  быть не должно: рефлексия без аннотаций и генерация кода во время работы под запретом,
+  встроенного COM нет, привязки XAML — компилируемые (`x:DataType`). Новая зависимость
+  должна поддерживать AOT. Для публикации нужен MSVC («Desktop development with C++»); сбой
+  компоновки из-за `vswhere` в VS 2026 и обход — в CONTRIBUTING.
 - Профили публикации `*.pubxml` игнорируются `VisualStudio.gitignore` — в конце `.gitignore`
   для них исключение.
 - Лицензии в поставке: `LICENSE` → `LICENSE.txt`, `THIRD-PARTY-NOTICES.txt` (вручную, по всем
