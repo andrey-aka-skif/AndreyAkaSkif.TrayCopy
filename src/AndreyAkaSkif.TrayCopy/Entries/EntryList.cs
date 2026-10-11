@@ -62,4 +62,21 @@ internal sealed class EntryList
     /// </summary>
     public EntryList SelectNext() =>
         Items.Count == 0 ? this : new EntryList(Items, (_currentIndex + 1) % Items.Count);
+
+    /// <summary>
+    /// Возвращает список с теми же записями, в котором текущей стала запись с именем
+    /// <paramref name="name"/>; если такой записи нет — этот же список
+    /// </summary>
+    public EntryList Select(string name)
+    {
+        for (var i = 0; i < Items.Count; i++)
+        {
+            if (Items[i].Name == name)
+            {
+                return new EntryList(Items, i);
+            }
+        }
+
+        return this;
+    }
 }

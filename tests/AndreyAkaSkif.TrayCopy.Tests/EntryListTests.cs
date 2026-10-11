@@ -147,4 +147,37 @@ public class EntryListTests
         // Assert
         Assert.Null(next.Current);
     }
+
+    [Theory]
+    [InlineData("github")]
+    [InlineData("gitlab")]
+    public void Select_ShouldSelectNamedEntryAndLeaveOriginalUnchanged(string name)
+    {
+        // Arrange
+        var list = new EntryList(Items, "gitea");
+
+        // Act
+        var selected = list.Select(name);
+
+        // Assert
+        Assert.Equal(name, selected.Current?.Name);
+        Assert.Equal(Items, selected.Items);
+        Assert.Equal("gitea", list.Current?.Name);
+    }
+
+    [Theory]
+    [InlineData("unknown")]
+    // имена сравниваются с учётом регистра, как в конструкторе
+    [InlineData("GitHub")]
+    public void Select_ShouldReturnSameList_WhenNameIsNotFound(string name)
+    {
+        // Arrange
+        var list = new EntryList(Items, "gitea");
+
+        // Act
+        var selected = list.Select(name);
+
+        // Assert
+        Assert.Same(list, selected);
+    }
 }

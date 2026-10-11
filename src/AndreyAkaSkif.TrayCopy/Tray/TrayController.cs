@@ -1,13 +1,14 @@
 using AndreyAkaSkif.TrayCopy.Settings;
 using AndreyAkaSkif.TrayCopy.Views;
+using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Threading;
 
 namespace AndreyAkaSkif.TrayCopy.Tray;
 
 /// <summary>
-/// Связывает иконку в трее с действиями приложения: передаёт клики в
-/// <see cref="TrayActions"/>, открывает по их запросу окно настроек и показывает текущую
-/// запись в подсказке иконки
+/// Связывает иконку в трее с действиями приложения: передаёт левые клики в
+/// <see cref="TrayActions"/>, по правому показывает меню, открывает по запросу действий окно
+/// настроек или завершает приложение и показывает текущую запись в подсказке иконки
 /// </summary>
 internal sealed class TrayController
 {
@@ -21,14 +22,16 @@ internal sealed class TrayController
     /// Создаёт контроллер иконки <paramref name="trayIcon"/>
     /// </summary>
     /// <param name="trayIcon">Иконка в трее</param>
-    /// <param name="actions">Действия по кликам</param>
+    /// <param name="actions">Действия по кликам и пунктам меню</param>
     /// <param name="settings">Текущие настройки: по ним строится подсказка</param>
     /// <param name="settingsWindow">Открывает окно настроек</param>
+    /// <param name="lifetime">Завершает приложение по пункту «Выход»</param>
     public TrayController(
         TrayIconHost trayIcon,
         TrayActions actions,
         SettingsService settings,
-        SettingsWindowService settingsWindow)
+        SettingsWindowService settingsWindow,
+        IControlledApplicationLifetime lifetime)
     {
         _trayIcon = trayIcon;
         _actions = actions;
@@ -36,6 +39,7 @@ internal sealed class TrayController
 
         trayIcon.Clicked += OnClicked;
         actions.SettingsRequested += (_, _) => settingsWindow.Show();
+        actions.ExitRequested += (_, _) => lifetime.Shutdown();
         settings.Changed += (_, _) => UpdateToolTip();
     }
 
@@ -50,16 +54,21 @@ internal sealed class TrayController
 
     // Действие выполняется после выхода из обработчика сообщения трея
     private void OnClicked(object? sender, TrayClickEventArgs e) =>
-        Dispatcher.UIThread.Post(() => _actions.HandleClick(e.Button, e.IsShiftPressed));
+        Dispatcher.UIThread.Post(() =>
+        {
+            if (e.Button == TrayButton.Right)
+            {
+                _trayIcon.ShowMenu(_actions.CreateMenu());
+            }
+            else
+            {
+                _actions.HandleClick(e.IsShiftPressed, e.IsControlPressed);
+            }
+        });
 
-    // Подсказка о настройках идёт второй строкой: при длинном имени записи обрезается она, а
-    // не имя. Без записей любой клик и так открывает настройки
     private void UpdateToolTip()
     {
         var current = _settings.Current.Entries.Current;
-        _trayIcon.SetToolTip(
-            current is null
-                ? AppName
-                : $"{AppName} — {current.Name}\n{TrayActions.SettingsHint}");
+        _trayIcon.SetToolTip(current is null ? AppName : $"{AppName} — {current.Name}");
     }
 }

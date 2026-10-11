@@ -18,6 +18,11 @@ internal static partial class NativeMethods
     public const int VkShift = 0x10;
 
     /// <summary>
+    /// Код виртуальной клавиши Ctrl для <see cref="GetAsyncKeyState"/>
+    /// </summary>
+    public const int VkControl = 0x11;
+
+    /// <summary>
     /// Признак «любой процесс» для <see cref="AllowSetForegroundWindow"/>
     /// </summary>
     public const uint AsfwAny = uint.MaxValue;
