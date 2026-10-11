@@ -7,6 +7,7 @@ global using AndreyAkaSkif.TrayCopy.Settings;
 global using AndreyAkaSkif.TrayCopy.Settings.Persistence;
 global using AndreyAkaSkif.TrayCopy.Settings.Persistence.Json;
 global using AndreyAkaSkif.TrayCopy.Tray;
+global using AndreyAkaSkif.TrayCopy.Updates;
 global using AndreyAkaSkif.TrayCopy.ViewModels;
 global using Microsoft.Extensions.Time.Testing;
 global using Xunit;
