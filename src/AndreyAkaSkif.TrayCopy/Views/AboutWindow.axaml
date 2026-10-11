@@ -1,8 +1,10 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:app="using:AndreyAkaSkif.TrayCopy"
+        xmlns:vm="using:AndreyAkaSkif.TrayCopy.ViewModels"
         x:Class="AndreyAkaSkif.TrayCopy.Views.AboutWindow"
         x:ClassModifier="internal"
+        x:DataType="vm:AboutViewModel"
         Title="О программе"
         Icon="/Assets/app.ico"
         SizeToContent="WidthAndHeight"
@@ -17,6 +19,10 @@
         <Style Selector="HyperlinkButton">
             <Setter Property="Padding" Value="0" />
         </Style>
+        <!-- Пояснения под названием: версия и состояние проверки обновлений -->
+        <Style Selector="TextBlock.secondary">
+            <Setter Property="Foreground" Value="{DynamicResource SystemControlForegroundBaseMediumHighBrush}" />
+        </Style>
     </Window.Styles>
 
     <StackPanel Margin="24,20" Spacing="16" MinWidth="320">
@@ -27,8 +33,28 @@
                    RenderOptions.BitmapInterpolationMode="HighQuality" />
             <StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center">
                 <TextBlock Text="TrayCopy" FontSize="20" FontWeight="SemiBold" />
-                <TextBlock Text="{Binding Source={x:Static app:AppInfo.Version}, StringFormat='Версия {0}'}"
-                           Foreground="{DynamicResource SystemControlForegroundBaseMediumHighBrush}" />
+                <TextBlock Classes="secondary"
+                           Text="{Binding Source={x:Static app:AppInfo.Version}, StringFormat='Версия {0}'}" />
+
+                <!-- Проверка обновлений: идёт, нашла новую версию или предлагает повторить -->
+                <TextBlock Classes="secondary"
+                           Text="Проверка обновлений…"
+                           IsVisible="{Binding IsChecking}" />
+                <HyperlinkButton Content="{Binding Update.Version, StringFormat='Доступно обновление {0}'}"
+                                 NavigateUri="{Binding Update.PageUrl}"
+                                 IsVisible="{Binding IsUpdateAvailable}" />
+                <StackPanel Orientation="Horizontal" Spacing="8" IsVisible="{Binding CanCheckAgain}">
+                    <TextBlock Classes="secondary"
+                               Text="Установлена последняя версия"
+                               VerticalAlignment="Center"
+                               IsVisible="{Binding IsUpToDate}" />
+                    <TextBlock Classes="secondary"
+                               Text="Проверка не удалась"
+                               VerticalAlignment="Center"
+                               IsVisible="{Binding IsFailed}" />
+                    <HyperlinkButton Content="Проверить обновления"
+                                     Command="{Binding CheckForUpdatesCommand}" />
+                </StackPanel>
             </StackPanel>
         </Grid>
 

@@ -26,6 +26,10 @@ Windows 11 присылает её как ЛКМ). Отображаемое им
   собственное скрытое окно сообщений `Win32Clipboard`, от трея не зависит.
 - Настройки — `%APPDATA%\AndreyAkaSkif.TrayCopy\settings.json`; шифрование DPAPI и вид уведомления
   (своё окно / системное) переключаются в окне настроек.
+- Проверка обновлений — в окне «О программе», через абстракцию `IReleaseSource`: способ
+  публикации может смениться. Реализация — GitHub Releases API, анонимно (60 запросов в час на
+  IP). `HttpClient` — один долгоживущий на `SocketsHttpHandler`, без `IHttpClientFactory` и
+  пакета `Microsoft.Extensions.Http`.
 - Тесты — xUnit v3 4.x в режиме Microsoft.Testing.Platform (`global.json`), без пакетов VSTest.
   Запуск: `dotnet test --solution AndreyAkaSkif.TrayCopy.slnx`. Без единого теста этот режим
   завершается с кодом 8, поэтому тестовый проект существует только вместе с тестами.
