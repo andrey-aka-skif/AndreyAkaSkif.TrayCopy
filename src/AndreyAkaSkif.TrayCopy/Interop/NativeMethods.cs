@@ -23,6 +23,27 @@ internal static partial class NativeMethods
     public const uint AsfwAny = uint.MaxValue;
 
     /// <summary>
+    /// Место в Z-порядке для <see cref="SetWindowPos"/>: над всеми окнами, в том числе окнами
+    /// «поверх всех»; окно получает признак «поверх всех»
+    /// </summary>
+    public const nint HwndTopmost = -1;
+
+    /// <summary>
+    /// Флаг <see cref="SetWindowPos"/>: не менять размер окна
+    /// </summary>
+    public const uint SwpNoSize = 0x0001;
+
+    /// <summary>
+    /// Флаг <see cref="SetWindowPos"/>: не менять положение окна
+    /// </summary>
+    public const uint SwpNoMove = 0x0002;
+
+    /// <summary>
+    /// Флаг <see cref="SetWindowPos"/>: не активировать окно
+    /// </summary>
+    public const uint SwpNoActivate = 0x0010;
+
+    /// <summary>
     /// Стандартный формат буфера обмена «текст в UTF-16 с завершающим нулём»
     /// </summary>
     public const uint CfUnicodeText = 13;
@@ -78,6 +99,15 @@ internal static partial class NativeMethods
     [LibraryImport("user32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
     public static partial bool AllowSetForegroundWindow(uint processId);
+
+    /// <summary>
+    /// Меняет размер, положение и место окна в Z-порядке; что из этого не меняется, задают
+    /// флаги <paramref name="flags"/>
+    /// </summary>
+    [LibraryImport("user32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static partial bool SetWindowPos(
+        nint hwnd, nint insertAfter, int x, int y, int width, int height, uint flags);
 
     /// <summary>
     /// Создаёт окно
