@@ -1,5 +1,6 @@
 using System.Collections.Specialized;
 using AndreyAkaSkif.TrayCopy.Interop;
+using AndreyAkaSkif.TrayCopy.Updates;
 using AndreyAkaSkif.TrayCopy.ViewModels;
 using Avalonia;
 using Avalonia.Controls;
@@ -21,6 +22,9 @@ internal sealed partial class SettingsWindow : Window
     private const string MoveDownClass = "moveDown";
     private const string RemoveClass = "remove";
 
+    // Проверка обновлений для окна «О программе»; у окна дизайнера её нет
+    private readonly UpdateChecker? _updateChecker;
+
     // Указатель последнего нажатия: курсор вслед за строкой переносится только у мыши
     private PointerType? _pointerType;
 
@@ -33,11 +37,13 @@ internal sealed partial class SettingsWindow : Window
     }
 
     /// <summary>
-    /// Создаёт окно для модели представления <paramref name="viewModel"/>
+    /// Создаёт окно для модели представления <paramref name="viewModel"/>; окно
+    /// «О программе» проверяет обновления через <paramref name="updateChecker"/>
     /// </summary>
-    public SettingsWindow(SettingsViewModel viewModel)
+    public SettingsWindow(SettingsViewModel viewModel, UpdateChecker updateChecker)
         : this()
     {
+        _updateChecker = updateChecker;
         DataContext = viewModel;
         viewModel.CloseRequested += (_, _) => Close();
 
@@ -67,8 +73,13 @@ internal sealed partial class SettingsWindow : Window
         }
     }
 
-    private void OnAboutClick(object? sender, RoutedEventArgs e) =>
-        _ = new AboutWindow().ShowDialog(this);
+    private void OnAboutClick(object? sender, RoutedEventArgs e)
+    {
+        if (_updateChecker is not null)
+        {
+            _ = new AboutWindow(new AboutViewModel(_updateChecker)).ShowDialog(this);
+        }
+    }
 
     // Перемещение пересоздаёт строку на новом месте, а на место удалённой встаёт следующая.
     // Фокус переходит к той же кнопке перемещённой строки, а после удаления — к кнопке
