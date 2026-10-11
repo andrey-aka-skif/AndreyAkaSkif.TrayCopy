@@ -1,3 +1,4 @@
+using AndreyAkaSkif.TrayCopy.Interop;
 using AndreyAkaSkif.TrayCopy.Settings;
 using Avalonia;
 using Avalonia.Controls;
@@ -11,8 +12,8 @@ namespace AndreyAkaSkif.TrayCopy.Notifications.Popup;
 /// </summary>
 /// <remarks>
 /// Окно одно: уведомление, пришедшее, пока окно на экране, заменяет текст и продлевает
-/// показ. Окно не забирает фокус; клик по нему скрывает его. Используется из потока
-/// интерфейса
+/// показ. Окно не забирает фокус и при каждом показе выводится поверх всех окон, в том числе
+/// окон «поверх всех»; клик по нему скрывает его. Используется из потока интерфейса
 /// </remarks>
 internal sealed class PopupNotifier : INotifier, IDisposable
 {
@@ -41,6 +42,7 @@ internal sealed class PopupNotifier : INotifier, IDisposable
         window.DataContext = notification;
         Place(window);
         window.Show();
+        RaiseAboveTopmost(window);
 
         timer.Stop();
         timer.Start();
@@ -78,6 +80,21 @@ internal sealed class PopupNotifier : INotifier, IDisposable
     {
         _timer?.Stop();
         _window?.Hide();
+    }
+
+    // Topmost окна применяется при его создании, а показ без активации оставляет окно на
+    // прежнем месте Z-порядка: окна «поверх всех», поднятые с прошлого показа, перекрыли бы
+    // его. Поэтому окно поднимается наверх при каждом показе
+    private static void RaiseAboveTopmost(Window window)
+    {
+        if (window.TryGetPlatformHandle() is not { } handle)
+        {
+            return;
+        }
+
+        NativeMethods.SetWindowPos(
+            handle.Handle, NativeMethods.HwndTopmost, x: 0, y: 0, width: 0, height: 0,
+            NativeMethods.SwpNoMove | NativeMethods.SwpNoSize | NativeMethods.SwpNoActivate);
     }
 
     private static void Place(Window window)
