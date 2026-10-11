@@ -5,6 +5,8 @@
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-10-11
+
 ### Added
 
 - Окно «О программе» при открытии проверяет, вышла ли новая версия, и ведёт на страницу
@@ -88,6 +90,7 @@
   запись в «Установленных приложениях». Запущенное приложение установщик просит закрыть;
   при удалении снимается запуск при входе в Windows, настройки остаются.
 
-[Unreleased]: https://github.com/andrey-aka-skif/AndreyAkaSkif.TrayCopy/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/andrey-aka-skif/AndreyAkaSkif.TrayCopy/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/andrey-aka-skif/AndreyAkaSkif.TrayCopy/compare/v0.2.0...v1.0.0
 [0.2.0]: https://github.com/andrey-aka-skif/AndreyAkaSkif.TrayCopy/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/andrey-aka-skif/AndreyAkaSkif.TrayCopy/releases/tag/v0.1.0
