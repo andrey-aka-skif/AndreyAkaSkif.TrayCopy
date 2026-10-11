@@ -15,6 +15,8 @@ using AndreyAkaSkif.TrayCopy.Settings;
 using AndreyAkaSkif.TrayCopy.Settings.Persistence;
 using AndreyAkaSkif.TrayCopy.Settings.Persistence.Json;
 using AndreyAkaSkif.TrayCopy.Tray;
+using AndreyAkaSkif.TrayCopy.Updates;
+using AndreyAkaSkif.TrayCopy.Updates.GitHub;
 using AndreyAkaSkif.TrayCopy.ViewModels;
 using AndreyAkaSkif.TrayCopy.Views;
 using Microsoft.Extensions.DependencyInjection;
@@ -73,6 +75,19 @@ public partial class App : Application
         services.AddSingleton<SettingsWindowService>();
 
         services.AddSingleton<IClipboard, Win32Clipboard>();
+
+        // Один долгоживущий клиент на всё приложение, как советуют HttpClient guidelines
+        // .NET: соединения пересоздаются по PooledConnectionLifetime и замечают смену DNS.
+        // IHttpClientFactory не нужен: он тянет пакеты журнала, метрик и конфигурации ради
+        // одного запроса из окна «О программе»
+        services.AddSingleton(_ => new HttpClient(new SocketsHttpHandler
+        {
+            PooledConnectionLifetime = TimeSpan.FromMinutes(2),
+        }));
+        services.AddOptions<GitHubReleaseSourceOptions>();
+        services.AddSingleton<IReleaseSource, GitHubReleaseSource>();
+        services.AddOptions<UpdateCheckerOptions>();
+        services.AddSingleton<UpdateChecker>();
 
         services.AddSingleton<INotifier, PopupNotifier>();
         services.AddSingleton<INotifier, BalloonNotifier>();
