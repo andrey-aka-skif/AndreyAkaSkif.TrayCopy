@@ -5,7 +5,9 @@ namespace AndreyAkaSkif.TrayCopy.Tray;
 /// </summary>
 /// <param name="button">Кнопка мыши</param>
 /// <param name="isShiftPressed">Признак нажатого Shift</param>
-internal sealed class TrayClickEventArgs(TrayButton button, bool isShiftPressed) : EventArgs
+/// <param name="isControlPressed">Признак нажатого Ctrl</param>
+internal sealed class TrayClickEventArgs(
+    TrayButton button, bool isShiftPressed, bool isControlPressed) : EventArgs
 {
     /// <summary>
     /// Кнопка мыши
@@ -16,4 +18,9 @@ internal sealed class TrayClickEventArgs(TrayButton button, bool isShiftPressed)
     /// Признак нажатого Shift в момент клика
     /// </summary>
     public bool IsShiftPressed { get; } = isShiftPressed;
+
+    /// <summary>
+    /// Признак нажатого Ctrl в момент клика
+    /// </summary>
+    public bool IsControlPressed { get; } = isControlPressed;
 }

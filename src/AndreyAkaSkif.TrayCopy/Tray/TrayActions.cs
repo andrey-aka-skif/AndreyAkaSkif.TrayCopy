@@ -6,8 +6,8 @@ using AndreyAkaSkif.TrayCopy.Settings;
 namespace AndreyAkaSkif.TrayCopy.Tray;
 
 /// <summary>
-/// Выполняет действия по кликам на иконке в трее: копирует текущую запись, выбирает
-/// следующую и сообщает о результате уведомлением
+/// Выполняет действия по кликам на иконке в трее и пунктам её меню: копирует текущую
+/// запись, выбирает другую и сообщает о результате уведомлением
 /// </summary>
 /// <param name="settings">Текущие настройки: записи и выбор текущей</param>
 /// <param name="clipboard">Буфер обмена, в который копируется значение записи</param>
@@ -16,39 +16,76 @@ internal sealed class TrayActions(
     SettingsService settings, IClipboard clipboard, NotificationService notifications)
 {
     /// <summary>
-    /// Подсказка о том, как открыть окно настроек: это единственный путь к выходу, а найти
-    /// его кликами наугад нельзя
-    /// </summary>
-    public const string SettingsHint = "Shift+клик — настройки и выход";
-
-    /// <summary>
-    /// Происходит, когда клик должен открыть окно настроек
+    /// Происходит, когда клик или пункт меню должен открыть окно настроек
     /// </summary>
     public event EventHandler? SettingsRequested;
 
     /// <summary>
-    /// Выполняет действие клика кнопкой <paramref name="button"/>: левая копирует значение
-    /// текущей записи в буфер обмена, правая выбирает следующую запись. Клик с Shift и любой
-    /// клик при пустом списке запрашивают окно настроек
+    /// Происходит, когда пункт меню должен завершить приложение
     /// </summary>
-    public void HandleClick(TrayButton button, bool isShiftPressed)
+    public event EventHandler? ExitRequested;
+
+    /// <summary>
+    /// Выполняет действие клика левой кнопкой: копирует значение текущей записи в буфер
+    /// обмена, а с Ctrl выбирает следующую запись. Клик с Shift и любой клик при пустом
+    /// списке запрашивают окно настроек
+    /// </summary>
+    public void HandleClick(bool isShiftPressed, bool isControlPressed)
     {
         var current = settings.Current.Entries.Current;
         if (isShiftPressed || current is null)
         {
-            SettingsRequested?.Invoke(this, EventArgs.Empty);
+            RequestSettings();
             return;
         }
 
-        if (button == TrayButton.Left)
-        {
-            Copy(current);
-        }
-        else
+        if (isControlPressed)
         {
             SelectNext();
         }
+        else
+        {
+            Copy(current);
+        }
     }
+
+    /// <summary>
+    /// Создаёт меню по текущим настройкам: записи с отметкой у текущей, действия кликов,
+    /// окно настроек и выход. При пустом списке остаются только окно настроек и выход
+    /// </summary>
+    /// <returns>Группы пунктов; меню разделяет их чертой</returns>
+    public IReadOnlyList<IReadOnlyList<TrayMenuItem>> CreateMenu()
+    {
+        TrayMenuItem[] app =
+        [
+            new("Настройки…", RequestSettings) { Gesture = "Shift+клик" },
+            new("Выход", () => ExitRequested?.Invoke(this, EventArgs.Empty)),
+        ];
+
+        var entries = settings.Current.Entries;
+        if (entries.Current is not { } current)
+        {
+            return [app];
+        }
+
+        return
+        [
+            [
+                .. entries.Items.Select(entry =>
+                    new TrayMenuItem(entry.Name, () => Select(entry.Name))
+                    {
+                        IsChecked = entry == current,
+                    }),
+            ],
+            [
+                new("Копировать текущую", () => Copy(current)) { Gesture = "Клик" },
+                new("Следующая запись", SelectNext) { Gesture = "Ctrl+клик" },
+            ],
+            app,
+        ];
+    }
+
+    private void RequestSettings() => SettingsRequested?.Invoke(this, EventArgs.Empty);
 
     private void Copy(Entry entry)
     {
@@ -65,23 +102,38 @@ internal sealed class TrayActions(
         notifications.Show(new Notification("Скопировано", entry.Name));
     }
 
-    // Выбор сохраняется в настройках; если сохранить не удалось, текущая запись остаётся
-    // прежней
     private void SelectNext()
+    {
+        if (TrySelect(entries => entries.SelectNext()))
+        {
+            var selected = settings.Current.Entries.Current!;
+            notifications.Show(new Notification("Выбрано для копирования", selected.Name));
+        }
+    }
+
+    // Запись, выбранную в меню, пользователь видит сам: об успехе уведомления нет
+    private void Select(string name)
+    {
+        if (name != settings.Current.Entries.Current?.Name)
+        {
+            _ = TrySelect(entries => entries.Select(name));
+        }
+    }
+
+    // Выбор сохраняется в настройках; если сохранить не удалось, текущая запись остаётся
+    // прежней, а уведомление называет причину
+    private bool TrySelect(Func<EntryList, EntryList> select)
     {
         try
         {
-            settings.Update(current => current with { Entries = current.Entries.SelectNext() });
+            settings.Update(current => current with { Entries = select(current.Entries) });
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)
         {
             notifications.Show(new Notification("Не удалось выбрать запись", e.Message));
-            return;
+            return false;
         }
 
-        // Правым кликом обычно ищут меню: подсказка о настройках показывается на нём
-        var selected = settings.Current.Entries.Current!;
-        notifications.Show(
-            new Notification("Выбрано для копирования", $"{selected.Name}\n{SettingsHint}"));
+        return true;
     }
 }

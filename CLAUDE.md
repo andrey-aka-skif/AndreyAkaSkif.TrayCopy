@@ -1,8 +1,9 @@
 # AndreyAkaSkif.TrayCopy
 
 Утилита для Windows в трее: ЛКМ по иконке копирует текущую строку в буфер обмена,
-ПКМ выбирает следующую, клик с Shift открывает окно настроек (СКМ не используется:
-Windows 11 присылает её как ЛКМ). Отображаемое имя —
+Ctrl+ЛКМ выбирает следующую, Shift+ЛКМ открывает окно настроек, ПКМ — меню (записи,
+копирование, следующая, настройки, выход). Двойной клик своего действия не имеет, СКМ не
+используется: Windows 11 присылает её как ЛКМ. Отображаемое имя —
 `TrayCopy`, всё остальное (решение, проекты, пространства имён, каталог данных) —
 `AndreyAkaSkif.TrayCopy`.
 
@@ -18,8 +19,9 @@ Windows 11 присылает её как ЛКМ). Отображаемое им
 
 - .NET 10, `net10.0-windows` (задано в `Directory.Build.props`), Avalonia 12, CommunityToolkit.Mvvm.
 - Версии пакетов — только в `Directory.Packages.props` (CPM); у `PackageReference` версий нет.
-- Иконка в трее — **H.NotifyIcon** (core-пакет), а не `TrayIcon` Avalonia: встроенный жёстко
-  открывает меню по ПКМ и не умеет уведомления. С H.NotifyIcon работает только `TrayIconHost`.
+- Иконка в трее — **H.NotifyIcon** (core-пакет), а не `TrayIcon` Avalonia: встроенный не
+  умеет уведомления. Меню по ПКМ — нативное, `PopupMenu` того же пакета. С H.NotifyIcon
+  работает только `TrayIconHost`.
 - Буфер обмена — Win32 через P/Invoke, с форматами `ExcludeClipboardContentFromMonitorProcessing`,
   `CanIncludeInClipboardHistory = 0`, `CanUploadToCloudClipboard = 0`, `Clipboard Viewer Ignore`
   (строка не попадает в Win+V, облачный буфер и сторонние менеджеры буфера). Владелец буфера —
